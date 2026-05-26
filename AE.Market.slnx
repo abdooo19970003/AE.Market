@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".cursor/rules/dotnet-backend.mdc" />
+    <File Path="AGENTS.md" />
+    <File Path="BACKEND_PLAN.md" />
+  </Folder>
+  <Folder Name="/Src/">
+    <Project Path="AE.Market.API/AE.Market.API.csproj" Id="5d70edf2-a0d6-41be-b0db-a0a8593f0e00" />
+    <Project Path="AE.Market.Infrastructure/AE.Market.Infrastructure.csproj" />
+    <Project Path="Application/AE.Market.Application.csproj" />
+    <Project Path="Domain/AE.Market.Domain.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="AE.Market.Domain.Tests/AE.Market.Domain.Tests.csproj" />
+  </Folder>
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
+</Solution>

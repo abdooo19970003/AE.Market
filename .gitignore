@@ -1,0 +1,24 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.sln.docstates
+.vs/
+
+# IDE
+.idea/
+*.swp
+.cursor/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/launchSettings.json
+
+# Docker
+docker-compose.override.yml

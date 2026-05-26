@@ -1,0 +1,40 @@
+services:
+  ae.market.api: 
+    image: ${DOCKER_REGISTRY-}aemarketapi
+    build:
+      context: .
+      dockerfile: AE.Market.API/Dockerfile
+  postgres: 
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=marketDb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass password --appendonly yes
+    volumes:
+      - redis-data:/data
+  seq:
+    image: datalust/seq:latest
+    restart: always
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINPASSWORD=password
+    ports:
+      - "8082:80"       # Seq UI will be available at http://localhost:8081
+      - "5341:5341"     # Port for ingestion (API keys / logging)
+    volumes:
+      - seq_data:/data
+volumes:
+  redis-data:
+  postgres_data:
+  seq_data:

@@ -7,7 +7,7 @@ namespace AE.Market.Infrastructure.Authantication
     {
         private const int SaltSize = 16;
         private const int HashSize = 64;
-        private const int Iterations = 100_000;
+        private const int Iterations = 350_000;
 
         private readonly HashAlgorithmName Algorithm = HashAlgorithmName.SHA512;
         public string HashPassword(string password)

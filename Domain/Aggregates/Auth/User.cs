@@ -34,15 +34,17 @@ namespace AE.Market.Domain.Aggregates.Auth
         private readonly List<UserPermission> _permissions = [];
         public IReadOnlyCollection<UserPermission> Permissions => _permissions;
 
-        public void AddPermission(Permission permission)
+        public UserPermission AddPermission(Permission permission)
         {
-            _permissions.Add(new(this.Id, permission));
+            UserPermission NewPermission = new(Guid.NewGuid(), this.Id, permission);
+            _permissions.Add(NewPermission);
             UpdateLastModified();
+            return NewPermission;
         }
 
-        public void RemovePermission(Permission permission)
+        public void RemovePermission(UserPermission permission)
         {
-            _permissions.Remove(new(this.Id, permission));
+            _permissions.Remove(permission);
             UpdateLastModified();
         }
 
@@ -52,7 +54,7 @@ namespace AE.Market.Domain.Aggregates.Auth
                 AddPermission(permission);
         }
 
-        public void RemovePermissions(IEnumerable<Permission> permissions)
+        public void RemovePermissions(IEnumerable<UserPermission> permissions)
         {
             foreach (var permission in permissions)
                 RemovePermission(permission);
@@ -62,7 +64,7 @@ namespace AE.Market.Domain.Aggregates.Auth
         private readonly List<RefreshToken> _refreshTokens = [];
         public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens;
 
-        public void AddRefreshToken(string token, TimeSpan expiry)
+        public RefreshToken AddRefreshToken(string token, TimeSpan expiry)
         {
             if (_refreshTokens.Count(t => !t.IsExpired) >= 5)
             {
@@ -75,7 +77,9 @@ namespace AE.Market.Domain.Aggregates.Auth
                     _refreshTokens.Remove(oldest);
                 }
             }
-            _refreshTokens.Add(new(Guid.NewGuid(), Id, token, DateTime.UtcNow+expiry));
+            var newToken = new RefreshToken(Guid.NewGuid(), Id, token, DateTime.UtcNow + expiry);
+            _refreshTokens.Add(newToken);
+            return newToken;
         }
 
         public void RevokeRefreshTokens()
@@ -87,7 +91,7 @@ namespace AE.Market.Domain.Aggregates.Auth
             _refreshTokens.Clear();
         }
 
-        public void RotateRefreshToken(string oldToken, string newToken, TimeSpan expiry)
+        public RefreshToken RotateRefreshToken(string oldToken, string newToken, TimeSpan expiry)
         {
             var token = _refreshTokens.FirstOrDefault(t => t.Token == oldToken);
             Guard.AgainstNull(token, nameof(token));
@@ -99,12 +103,13 @@ namespace AE.Market.Domain.Aggregates.Auth
                 RevokeRefreshTokens();
                 // Rise Domain Event for notification and analytics ...
                 AddDominEvent(new RefreshTokenReusedEvent(Id, oldToken));
+                //return null;
                 throw Exceptions.Auth.ReplayAttackDetected;
             }
             if (token.IsExpired || token.IsDeleted)
                 throw Exceptions.Auth.TokenExpiredOrRevoked;
             token.MarkConsumed();
-            AddRefreshToken(newToken, expiry);
+            return AddRefreshToken(newToken, expiry);
         }
     }
 }

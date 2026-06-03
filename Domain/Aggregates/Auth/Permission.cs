@@ -2,7 +2,7 @@
 {
     public enum Permission
     {
-        AccessUsers = 0,
-        MutateUsers = 1,
+        AccessUsers = 1,
+        MutateUsers = 2,
     }
 }

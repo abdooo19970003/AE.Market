@@ -21,17 +21,19 @@ namespace AE.Market.Domain.Common.Specifications
 
         public bool IsPagingEnabled { get; private set; }
 
-        protected void AddInclude(Expression<Func<T, object>> expression) => Includes.Add(expression);
-        protected void SetOrderBy(Expression<Func<T, object>> expression, bool desc = true)
+        public ISpecification<T> AddInclude(Expression<Func<T, object>> expression) { Includes.Add(expression);return this; }
+        public ISpecification<T> SetOrderBy(Expression<Func<T, object>> expression, bool desc = true)
         {
             OrderBy = expression;
             IsDescending = desc;
+            return this;    
         }
-        protected void SetPagination(int skip, int take)
+        public ISpecification<T> SetPagination(int skip, int take)
         {
             IsPagingEnabled = true;
             Skip = skip;
             Take = take;
+            return this;
         }
     }
 }

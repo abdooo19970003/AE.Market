@@ -1,4 +1,5 @@
-﻿using AE.Market.Domain.Common;
+﻿using AE.Market.Domain.Aggregates.Auth.Events;
+using AE.Market.Domain.Common;
 
 namespace AE.Market.Domain.Aggregates.Auth
 {
@@ -25,5 +26,6 @@ namespace AE.Market.Domain.Aggregates.Auth
         internal void MarkConsumed() { 
             ConsumedAt = DateTime.UtcNow;
         }
+      
     }
 }

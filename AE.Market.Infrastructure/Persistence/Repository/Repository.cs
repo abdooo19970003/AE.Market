@@ -56,6 +56,8 @@ namespace AE.Market.Infrastructure.Persistence.Repository
                 .AsNoTracking()
                 .ToListAsync(cancellationToken: cancellationToken);
 
+        public void Update(T entity) => baseCommand.Update(entity);
+
         public async Task AddAsync(T entity, CancellationToken cancellationToken = default) =>
             await baseCommand.AddAsync(entity, cancellationToken);
 
@@ -72,5 +74,8 @@ namespace AE.Market.Infrastructure.Persistence.Repository
             Guid id,
             CancellationToken cancellationToken = default
         ) => baseCommand.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+
+        public async Task<T?> GetBySpecWithTrackingAsync(ISpecification<T> spec, CancellationToken cancellationToken = default)
+       => await SpecificationEvaluator<T>.GetQuery(baseCommand, spec).FirstOrDefaultAsync(cancellationToken);
     }
 }

@@ -4,7 +4,7 @@ using AE.Market.Domain.Common.Specifications;
 namespace AE.Market.Application.Common.Interfaces
 {
     public interface IRepository<T>
-        where T : BaseEntity 
+        where T : BaseEntity  
     {
         // Read Operations - QUERIES
         Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
@@ -17,8 +17,10 @@ namespace AE.Market.Application.Common.Interfaces
         // Write Operations - COMMANDS
         Task AddAsync(T entity,  CancellationToken cancellationToken = default);
         Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default );
+        void Update(T entity);
         void Delete(T entity);
         void DeleteRange(IEnumerable<T> entities);
         Task<T?> GetByIdWithTrackingAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<T?> GetBySpecWithTrackingAsync(ISpecification<T> spec, CancellationToken cancellationToken = default);
     }
 }

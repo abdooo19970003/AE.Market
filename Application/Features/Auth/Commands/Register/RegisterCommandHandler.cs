@@ -11,7 +11,7 @@ using MediatR;
 
 namespace AE.Market.Application.Features.Auth.Commands.Register
 {
-    public class RegisterCommandHandler(IRepository<User> repo, IPasswordService passwordService)
+    public class RegisterCommandHandler(IRepository<User> repo, IPasswordService passwordService, IJwtService jwt)
         : IRequestHandler<RegisterCommand, Result<TokensResponseDto>>
     {
         public async Task<Result<TokensResponseDto>> Handle(
@@ -27,11 +27,10 @@ namespace AE.Market.Application.Features.Auth.Commands.Register
 
             var hash = passwordService.HashPassword(request.Password);
             var user = User.Register(Guid.NewGuid(), email, hash);
+            var refreshToken = jwt.GenerateRefreshToken();
+            var accessToken = jwt.AuthanticateUser(user);
+            user.AddRefreshToken(refreshToken, TimeSpan.FromDays(10));
             await repo.AddAsync(user, cancellationToken);
-
-            var refreshToken = "TEST_SECRET_TOKEN";
-            var accessToken = "TOP_SECRET_ACCESS_TOKEN";
-            user.AddRefreshToken(refreshToken, TimeSpan.FromDays(5));
             TokensResponseDto result = new(accessToken, refreshToken, user.Id);
             return Result<TokensResponseDto>.Success(result);
         }

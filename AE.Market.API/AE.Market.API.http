@@ -1,0 +1,6 @@
+@AE.Market.API_HostAddress = http://localhost:5141
+
+GET {{AE.Market.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

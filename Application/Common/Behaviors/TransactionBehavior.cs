@@ -21,6 +21,7 @@ namespace AE.Market.Application.Common.Behaviors
             {
                 TResponse response = await next(cancellationToken);
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
                 return response;
             }
             catch (Exception ex)
@@ -37,7 +38,7 @@ namespace AE.Market.Application.Common.Behaviors
                         failMethod.Invoke(
                             null,
                             [
-                                ApplicationErrors.ApplicationError("Transaction Error"),
+                                ApplicationErrors.ApplicationError(nameof(TransactionBehavior<,>),ex.Message),
                                 new List<Error>
                                 {
                                     new(ex.Source ?? "TransactionBehavior", ex.Message),
@@ -49,7 +50,7 @@ namespace AE.Market.Application.Common.Behaviors
                     return (TResponse)
                         (object)
                             Result.Fail(
-                                ApplicationErrors.ApplicationError("Transaction Error"),
+                                ApplicationErrors.ApplicationError(nameof(TransactionBehavior<,>),"Transaction Error"),
                                 [new(ex.Source ?? "TransactionBehavior", ex.Message)]
                             );
             }

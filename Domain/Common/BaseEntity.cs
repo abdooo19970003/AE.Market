@@ -9,30 +9,30 @@
         public bool IsDeleted { get; private set; } = false;
 
         // Main Constructor
-        internal BaseEntity(Guid id)
+        protected BaseEntity(Guid id)
         {
             Id = id;
         }
 
         // Parameterless Constructor for ORM
-        private BaseEntity() { }
+        protected BaseEntity() { }
 
         // Domain Events
-        private readonly List<IDomainEvent> _domainEvets = [];
-        public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvets;
+        private readonly List<IDomainEvent> _domainEvents = new List<IDomainEvent>();
+        public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
-        public void AddDominEvent(IDomainEvent domainEvent)
+        public void AddDomainEvent(IDomainEvent domainEvent)
         {
-            _domainEvets.Add(domainEvent);
+            _domainEvents.Add(domainEvent);
         }
 
         public void ClearDomainEvents()
         {
-            _domainEvets.Clear();
+            _domainEvents.Clear();
         }
 
         // Basic Methods
-        public void UpdateLastModified()
+        protected void UpdateLastModified()
         {
             LastModified = DateTime.UtcNow;
         }
@@ -42,9 +42,10 @@
             IsDeleted = true;
             UpdateLastModified();
         }
-        public void Restore() {
+        public void Restore()
+        {
             IsDeleted = false;
-            LastModified = DateTime.UtcNow;
+            UpdateLastModified();
         }
 
         // Override HashCode
@@ -53,20 +54,20 @@
             return HashCode.Combine(Id);
         }
 
-        // Override Operators 
+        // Override Equals
         public override bool Equals(object? obj)
         {
-            if(obj is null 
+            if (obj is null
                 || obj is not BaseEntity other
                 || this.GetType() != other.GetType()
                 ) return false;
             return this.Id == other.Id;
         }
 
-        // Operators 
+        // Operators
         public static bool operator ==(BaseEntity? a, BaseEntity? b)
         {
-            if(a is null)
+            if (a is null)
             {
                 return b is null;
             }
@@ -76,6 +77,5 @@
         {
             return !(a == b);
         }
-
     }
 }

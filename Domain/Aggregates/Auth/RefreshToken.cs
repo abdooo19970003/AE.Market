@@ -3,7 +3,7 @@ using AE.Market.Domain.Common;
 
 namespace AE.Market.Domain.Aggregates.Auth
 {
-    public class RefreshToken : BaseEntity
+    public sealed class RefreshToken : BaseEntity
     {
         public string Token { get; private set; }
         public DateTime ExpiryTime { get; private set; }
@@ -12,7 +12,7 @@ namespace AE.Market.Domain.Aggregates.Auth
         public Guid UserId { get; private set; }
         public User? User { get; private set; }
 
-        private RefreshToken(Guid id) : base(id)
+        private RefreshToken()
         {
             
         }

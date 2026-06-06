@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace AE.Market.Application.Common.Behaviors
 {
-    public class ValidationBehavior<TRequest, TResponse>(
+    internal sealed class ValidationBehavior<TRequest, TResponse>(
         IEnumerable<IValidator<TRequest>> validators
     ) : IPipelineBehavior<TRequest, TResponse>
         where TRequest : IRequest<TResponse>

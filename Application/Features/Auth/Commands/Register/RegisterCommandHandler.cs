@@ -11,7 +11,7 @@ using MediatR;
 
 namespace AE.Market.Application.Features.Auth.Commands.Register
 {
-    public class RegisterCommandHandler(IRepository<User> repo, IPasswordService passwordService, IJwtService jwt)
+    public sealed class RegisterCommandHandler(IRepository<User> repo, IPasswordService passwordService, IJwtService jwt)
         : IRequestHandler<RegisterCommand, Result<TokensResponseDto>>
     {
         public async Task<Result<TokensResponseDto>> Handle(

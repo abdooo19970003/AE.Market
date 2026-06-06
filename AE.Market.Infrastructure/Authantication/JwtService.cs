@@ -9,7 +9,7 @@ using System.Text;
 
 namespace AE.Market.Infrastructure.Authantication
 {
-    internal class JwtService(JwtOptions options) : IJwtService
+    internal sealed class JwtService(JwtOptions options) : IJwtService
     {
         public string AuthanticateUser(User user)
         {

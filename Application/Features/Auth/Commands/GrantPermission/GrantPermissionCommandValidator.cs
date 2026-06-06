@@ -2,7 +2,7 @@
 
 namespace AE.Market.Application.Features.Auth.Commands.GrantPermission
 {
-    internal class GrantPermissionCommandValidator : AbstractValidator<GrantPermissionCommand>
+    internal sealed class GrantPermissionCommandValidator : AbstractValidator<GrantPermissionCommand>
     {
         public GrantPermissionCommandValidator()
         {

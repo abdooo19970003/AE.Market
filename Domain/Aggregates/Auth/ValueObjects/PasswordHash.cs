@@ -2,7 +2,7 @@
 
 namespace AE.Market.Domain.Aggregates.Auth.ValueObjects
 {
-    public record PasswordHash
+    public record PasswordHash : IValueObject
     {
         public string Value { get; }
 

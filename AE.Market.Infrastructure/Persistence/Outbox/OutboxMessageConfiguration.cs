@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AE.Market.Infrastructure.Persistence.Outbox
 {
-    internal class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage>
+    internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage>
     {
         public void Configure(EntityTypeBuilder<OutboxMessage> builder)
         {

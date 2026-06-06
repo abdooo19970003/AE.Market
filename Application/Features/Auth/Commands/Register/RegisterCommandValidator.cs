@@ -5,7 +5,7 @@ using FluentValidation;
 
 namespace AE.Market.Application.Features.Auth.Commands.Register
 {
-    public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
+    public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand>
     {
         private readonly IRepository<User> _repo;
 
@@ -14,7 +14,7 @@ namespace AE.Market.Application.Features.Auth.Commands.Register
             RuleFor(c => c.Email)
                 .EmailAddress()
                 .NotEmpty()
-                .MustAsync(IsEmailUnique)
+                .MustAsync(IsEmailUniqueAsync)
                 .WithMessage("This email is already registered.");
             RuleFor(c => c.Password)
                 .NotEmpty()
@@ -23,7 +23,7 @@ namespace AE.Market.Application.Features.Auth.Commands.Register
             _repo = repo;
         }
 
-        private async Task<bool> IsEmailUnique(string email, CancellationToken cancellationToken)
+        private async Task<bool> IsEmailUniqueAsync(string email, CancellationToken cancellationToken)
         {
             var spec = new UserByEmailSpec(email);
             return !await _repo.AnyAsync(spec, cancellationToken);

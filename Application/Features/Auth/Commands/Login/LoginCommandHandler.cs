@@ -9,7 +9,7 @@ using MediatR;
 
 namespace AE.Market.Application.Features.Auth.Commands.Login
 {
-    internal class LoginCommandHandler(
+    internal sealed class LoginCommandHandler(
         IRepository<User> userRepo,
         IRepository<RefreshToken> tokenRepo,
         IPasswordService passwordService,
@@ -32,7 +32,7 @@ namespace AE.Market.Application.Features.Auth.Commands.Login
              var refresh =  existing.AddRefreshToken(refreshTokenString, TimeSpan.FromDays(10));
            await tokenRepo.AddAsync(refresh, cancellationToken);
             var accessToken = jwt.AuthanticateUser(existing);
-            existing.AddDominEvent(new UserLoggedInEvent(existing.Id));
+            existing.AddDomainEvent(new UserLoggedInDomainEvent(existing.Id));
             var response = new TokensResponseDto(accessToken, refreshTokenString, existing.Id);
             return Result<TokensResponseDto>.Success(response);
 

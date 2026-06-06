@@ -3,9 +3,9 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace AE.Market.Infrastructure.Caching
 {
-    internal class MemoryCachingService(IMemoryCache cache) : ICacheService
+    internal sealed class MemoryCachingService(IMemoryCache cache) : ICacheService
     {
-        public Task<T?> GetAsync<T>(string key)
+        public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken)
         {
             cache.TryGetValue(key, out T? value);
             return Task.FromResult(value);
@@ -33,7 +33,7 @@ namespace AE.Market.Infrastructure.Caching
             return value;
         }
 
-        public Task RemoveAsync(string key)
+        public Task RemoveAsync(string key, CancellationToken cancellationToken)
         {
             cache.Remove(key);
             return Task.CompletedTask;

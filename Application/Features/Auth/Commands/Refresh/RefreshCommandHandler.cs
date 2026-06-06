@@ -4,12 +4,11 @@ using AE.Market.Domain.Aggregates.Auth;
 using AE.Market.Domain.Aggregates.Auth.Errors;
 using AE.Market.Domain.Aggregates.Auth.Events;
 using AE.Market.Domain.Common;
-using AE.Market.Domain.Common.DomainErrors;
 using MediatR;
 
 namespace AE.Market.Application.Features.Auth.Commands.Refresh
 {
-    internal partial class RefreshCommandHandler
+    internal sealed class RefreshCommandHandler
         (
         IRepository<RefreshToken> tokenRepo,
         IRepository<User> userRepo,
@@ -34,7 +33,7 @@ namespace AE.Market.Application.Features.Auth.Commands.Refresh
             
             else if(token.ConsumedAt is not null)
             {
-                token.AddDominEvent(new RefreshTokenReusedEvent(token.UserId, token.Token));
+                token.AddDomainEvent(new RefreshTokenReusedDomainEvent(token.UserId, token.Token));
                 return Result<TokensResponseDto>.Fail(AuthErrors.ReplayAttackDetected);
             }
             var newRefreshToken = jwt.GenerateRefreshToken();

@@ -4,7 +4,7 @@ using AE.Market.Domain.Common;
 
 namespace AE.Market.Domain.Aggregates.Auth
 {
-    public class User : BaseEntity, IAggregateRoot
+    public sealed class User : BaseEntity, IAggregateRoot
     {
         public EmailAddress Email { get; private set; }
         public PasswordHash PasswordHash { get; private set; }
@@ -17,22 +17,22 @@ namespace AE.Market.Domain.Aggregates.Auth
             PasswordHash = hash;
         }
 
-        private User(Guid id)
-            : base(id) { }
+        // Paramaterless constructor
+        private User() { }
 
+        // static factory method
         public static User Register(Guid id, string email, string passwordHash)
         {
             var hash = PasswordHash.FromHashedString(passwordHash);
             var emailAddress = EmailAddress.Create(email);
             var user = new User(id, emailAddress, hash);
-            user.AddDominEvent(new UserRegisteredEvent(user.Id));
+            user.AddDomainEvent(new UserRegisteredDomainEvent(user.Id));
             return user;
         }
 
         // Permissions Managment
-
-        private readonly List<UserPermission> _permissions = [];
-        public IReadOnlyCollection<UserPermission> Permissions => _permissions;
+        private readonly List<UserPermission> _permissions = new List<UserPermission>();
+        public IReadOnlyCollection<UserPermission> Permissions => _permissions.AsReadOnly();
 
         public UserPermission AddPermission(Permission permission)
         {
@@ -61,8 +61,8 @@ namespace AE.Market.Domain.Aggregates.Auth
         }
 
         // Refresh Tokens
-        private readonly List<RefreshToken> _refreshTokens = [];
-        public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens;
+        private readonly List<RefreshToken> _refreshTokens = new List<RefreshToken>();
+        public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens.AsReadOnly();
 
         public RefreshToken AddRefreshToken(string token, TimeSpan expiry)
         {
@@ -102,7 +102,7 @@ namespace AE.Market.Domain.Aggregates.Auth
                 // Force Logout
                 RevokeRefreshTokens();
                 // Rise Domain Event for notification and analytics ...
-                AddDominEvent(new RefreshTokenReusedEvent(Id, oldToken));
+                AddDomainEvent(new RefreshTokenReusedDomainEvent(Id, oldToken));
                 //return null;
                 throw Exceptions.Auth.ReplayAttackDetected;
             }
@@ -110,6 +110,56 @@ namespace AE.Market.Domain.Aggregates.Auth
                 throw Exceptions.Auth.TokenExpiredOrRevoked;
             token.MarkConsumed();
             return AddRefreshToken(newToken, expiry);
+        }
+
+        // User Profile Manegment
+        public void CreateProfile(Guid profileId, string firstName, string? lastName)
+        {
+            if (Profile is not null)
+                throw new InvalidOperationException("Profile already exists.");
+
+            Profile = UserProfile.Create(profileId, this.Id, firstName, lastName);
+            UpdateLastModified();
+        }
+
+        public void UpdateProfilePhone(string phoneNumber)
+        {
+            GuardAgainstMissingProfile();
+            if (string.IsNullOrEmpty(phoneNumber))
+                Profile!.RemovePhoneNumber();
+            else
+                Profile!.SetPhoneNumber(phoneNumber);
+            UpdateLastModified();
+        }
+
+        public void UpdateProfileAddress(string city, string country, string? addressLine)
+        {
+            GuardAgainstMissingProfile();
+            Profile!.SetAddress(city, country, addressLine);
+            UpdateLastModified();
+        }
+
+        public void RemoveProfileAddress()
+        {
+            GuardAgainstMissingProfile();
+            Profile!.RemoveAddress();
+            UpdateLastModified();
+        }
+
+        public void UpdateProfileImage(string url)
+        {
+            GuardAgainstMissingProfile();
+            if (string.IsNullOrEmpty(url))
+                Profile!.SetProfileImage(url);
+            else
+                Profile!.SetProfileImage(url);
+            UpdateLastModified();
+        }
+
+        private void GuardAgainstMissingProfile()
+        {
+            if (Profile is null)
+                throw new InvalidOperationException("User profile is not initialized.");
         }
     }
 }

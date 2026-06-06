@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace AE.Market.Domain.Aggregates.Auth.ValueObjects
 {
-    public record PhoneNumber
+    public record PhoneNumber : IValueObject
     {
         public string Value { get; }
        

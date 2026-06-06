@@ -2,5 +2,5 @@
 
 namespace AE.Market.Domain.Aggregates.Auth.Events
 {
-    public record UserLoggedInEvent(Guid Id) : IDomainEvent;
+    public sealed record UserLoggedInDomainEvent(Guid Id) : IDomainEvent;
 }

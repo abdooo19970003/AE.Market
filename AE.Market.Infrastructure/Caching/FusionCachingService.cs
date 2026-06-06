@@ -3,11 +3,11 @@ using ZiggyCreatures.Caching.Fusion;
 
 namespace AE.Market.Infrastructure.Caching
 {
-    internal class FusionCachingService(IFusionCache cache) : ICacheService
+    internal sealed class FusionCachingService(IFusionCache cache) : ICacheService
     {
-        public async Task<T?> GetAsync<T>(string key)
+        public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken)
         {
-            return await cache.GetOrDefaultAsync<T>(key);
+            return await cache.GetOrDefaultAsync<T>(key,token:cancellationToken);
         }
 
         public async Task<T> GetOrCreateAsync<T>(
@@ -33,9 +33,9 @@ namespace AE.Market.Infrastructure.Caching
             return value;
         }
 
-        public async Task RemoveAsync(string key)
+        public async Task RemoveAsync(string key, CancellationToken cancellationToken)
         {
-            await cache.RemoveAsync(key);
+            await cache.RemoveAsync(key, token: cancellationToken);
         }
 
         public async Task SetAsync<T>(

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AE.Market.Infrastructure.Persistence.Configurations.Auth
 {
-    internal class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
+    internal sealed class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
     {
         public void Configure(EntityTypeBuilder<UserProfile> builder)
         {

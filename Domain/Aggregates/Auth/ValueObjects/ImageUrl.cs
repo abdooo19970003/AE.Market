@@ -3,7 +3,7 @@ using AE.Market.Domain.Common.DomainErrors;
 
 namespace AE.Market.Domain.Aggregates.Auth.ValueObjects
 {
-    public record ImageUrl
+    public record ImageUrl : IValueObject
     {
         public string Value { get; }
  

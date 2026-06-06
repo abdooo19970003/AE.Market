@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 
 namespace AE.Market.Infrastructure.Authantication
 {
-    public class PasswordService : IPasswordService
+    public sealed class PasswordService : IPasswordService
     {
         private const int SaltSize = 16;
         private const int HashSize = 64;

@@ -13,10 +13,11 @@ namespace AE.Market.Application
             services.AddMediatR(cfg =>
             {
                 cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
+                cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ExceptionHandlerBehavior<,>));
                 cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>) );
+                cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
                 cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
                 cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(TransactionBehavior<,>));
-                cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
             });
 
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly,includeInternalTypes:true);

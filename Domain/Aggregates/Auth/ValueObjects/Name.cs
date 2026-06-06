@@ -1,8 +1,9 @@
-﻿using System.Text.RegularExpressions;
+﻿using AE.Market.Domain.Common;
+using System.Text.RegularExpressions;
 
 namespace AE.Market.Domain.Aggregates.Auth.ValueObjects
 {
-    public record Name
+    public record Name : IValueObject
     {
         public string Value { get; }
         private static readonly Regex NamesRegex = new(

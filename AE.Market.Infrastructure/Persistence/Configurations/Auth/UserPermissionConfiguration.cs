@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AE.Market.Infrastructure.Persistence.Configurations.Auth
 {
-    internal class UserPermissionConfiguration : IEntityTypeConfiguration<UserPermission>
+    internal sealed class UserPermissionConfiguration : IEntityTypeConfiguration<UserPermission>
     {
         public void Configure(EntityTypeBuilder<UserPermission> builder)
         {

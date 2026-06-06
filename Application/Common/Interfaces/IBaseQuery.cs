@@ -3,5 +3,5 @@ using MediatR;
 
 namespace AE.Market.Application.Common.Interfaces
 {
-    internal interface IBaseQuery<TResponse> : IRequest<Result<TResponse>>;
+    public interface IBaseQuery<TResponse> : IRequest<Result<TResponse>>;
 }

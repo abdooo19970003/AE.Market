@@ -2,7 +2,7 @@
 
 namespace AE.Market.Application.Features.Auth.Commands.Refresh
 {
-    internal class RefreshCommandValidator : AbstractValidator<RefreshCommand>
+    internal sealed class RefreshCommandValidator : AbstractValidator<RefreshCommand>
     {
         public RefreshCommandValidator()
         {

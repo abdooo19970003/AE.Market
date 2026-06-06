@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AE.Market.Infrastructure.Persistence.Configurations.Auth
 {
-    internal class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
+    internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
     {
         public void Configure(EntityTypeBuilder<RefreshToken> builder)
         {

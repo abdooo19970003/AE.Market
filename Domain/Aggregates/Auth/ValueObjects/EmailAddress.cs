@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace AE.Market.Domain.Aggregates.Auth.ValueObjects
 {
-    public record EmailAddress
+    public record EmailAddress : IValueObject
     {
         public string Value { get; }
 

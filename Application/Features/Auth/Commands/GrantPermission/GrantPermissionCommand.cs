@@ -3,6 +3,6 @@ using AE.Market.Domain.Aggregates.Auth;
 
 namespace AE.Market.Application.Features.Auth.Commands.GrantPermission
 {
-    public record GrantPermissionCommand(Guid UserId, Permission Permission) : ICommand<bool>;
+    public sealed record GrantPermissionCommand(Guid UserId, Permission Permission) : ICommand<bool>;
     
 }

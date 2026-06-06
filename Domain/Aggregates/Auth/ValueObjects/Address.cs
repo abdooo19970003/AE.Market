@@ -3,7 +3,7 @@ using AE.Market.Domain.Common.DomainErrors;
 
 namespace AE.Market.Domain.Aggregates.Auth.ValueObjects
 {
-    public record Address
+    public  record Address : IValueObject
     {
         private Address(string country, string city, string? addressLine)
         {
@@ -42,5 +42,6 @@ namespace AE.Market.Domain.Aggregates.Auth.ValueObjects
 
         public static implicit operator string(Address value) =>
             string.Join(",", [value.Country, value.City, value.AddressLine]);
+
     }
 }

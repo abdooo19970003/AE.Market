@@ -7,7 +7,7 @@ using MediatR;
 
 namespace AE.Market.Application.Features.Auth.Commands.GrantPermission
 {
-    internal class GrantPermissionCommandHandler(
+    internal sealed class GrantPermissionCommandHandler(
         IRepository<User> userRepo,
         IRepository<UserPermission> permissionRepo
     ) : IRequestHandler<GrantPermissionCommand, Result<bool>>

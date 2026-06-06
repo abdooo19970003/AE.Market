@@ -4,9 +4,10 @@ using Microsoft.Extensions.Logging;
 
 namespace AE.Market.Application.Common.Behaviors
 {
-    internal class ExceptionHandlerBehavior<TRequest, TResponse>(
+    internal sealed class ExceptionHandlerBehavior<TRequest, TResponse>(
         ILogger<ExceptionHandlerBehavior<TRequest, TResponse>> logger
     ) : IPipelineBehavior<TRequest, TResponse>
+        where TRequest : notnull
     {
         public Task<TResponse> Handle(
             TRequest request,

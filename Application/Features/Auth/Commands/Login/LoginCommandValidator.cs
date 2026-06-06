@@ -2,7 +2,7 @@
 
 namespace AE.Market.Application.Features.Auth.Commands.Login
 {
-    internal class LoginCommandValidator :AbstractValidator<LoginCommand>
+    internal sealed class LoginCommandValidator :AbstractValidator<LoginCommand>
     {
         public LoginCommandValidator()
         {

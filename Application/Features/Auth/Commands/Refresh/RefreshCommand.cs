@@ -4,6 +4,6 @@ using AE.Market.Application.Features.Auth.DTOs;
 
 namespace AE.Market.Application.Features.Auth.Commands.Refresh
 {
-    public record RefreshCommand(string OldToken) : ICommand<TokensResponseDto>;
+    public sealed record RefreshCommand(string OldToken) : ICommand<TokensResponseDto>;
     
 }

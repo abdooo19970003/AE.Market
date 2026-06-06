@@ -2,7 +2,7 @@
 
 namespace AE.Market.Domain.Aggregates.Auth.Events
 {
-    public record RefreshTokenReusedEvent(Guid UserId, string UsedToken) : IDomainEvent;
+    public sealed record RefreshTokenReusedDomainEvent(Guid UserId, string UsedToken) : IDomainEvent;
 
     /// Expected Behavior | Subscribers
     /// 1# Revoke All Tokens for the User (Force Logout) | Already done by User Aggregate

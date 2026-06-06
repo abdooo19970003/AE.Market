@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace AE.Market.Application.Common.Behaviors
 {
-    public class TransactionBehavior<TRequest, TResponse>(IUnitOfWork unitOfWork)
+    internal sealed class TransactionBehavior<TRequest, TResponse>(IUnitOfWork unitOfWork)
         : IPipelineBehavior<TRequest, TResponse>
         where TRequest : IBaseCommand
     {

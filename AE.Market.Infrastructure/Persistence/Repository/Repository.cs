@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AE.Market.Infrastructure.Persistence.Repository
 {
-    internal class Repository<T>(AppDbContext db) : IRepository<T>
+    internal sealed class Repository<T>(AppDbContext db) : IRepository<T>, IReadRepository<T>
         where T : BaseEntity
     {
         private readonly IQueryable<T> baseQuery = db.Set<T>();

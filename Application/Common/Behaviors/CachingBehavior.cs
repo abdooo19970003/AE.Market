@@ -6,7 +6,7 @@ using MediatR;
 
 namespace AE.Market.Application.Common.Behaviors
 {
-    internal class CachingBehavior<TRequest, TResponse>(ICacheService cache)
+    internal sealed class CachingBehavior<TRequest, TResponse>(ICacheService cache)
         : IPipelineBehavior<TRequest, TResponse>
         where TRequest : ICachedQuery
     {

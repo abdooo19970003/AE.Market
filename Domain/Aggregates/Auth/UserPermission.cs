@@ -2,7 +2,7 @@
 
 namespace AE.Market.Domain.Aggregates.Auth
 {
-    public class UserPermission : BaseEntity
+    public sealed class UserPermission : BaseEntity
     {
         public Guid UserId { get; private set; }
         public User? User { get; private set; }
@@ -14,7 +14,7 @@ namespace AE.Market.Domain.Aggregates.Auth
             this.UserId = UserId;
             Permission = permission;
         }
-
+        private UserPermission() { }
 
     }
 }

@@ -2,5 +2,5 @@
 
 namespace AE.Market.Application.Features.Auth.DTOs
 {
-    public record TokensResponseDto(string AccessToken, string RefreshToken,Guid? UserId);
+    public sealed record TokensResponseDto(string AccessToken, string RefreshToken,Guid? UserId);
 }

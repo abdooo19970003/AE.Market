@@ -4,7 +4,7 @@ using AE.Market.Domain.Common;
 
 namespace AE.Market.Domain.Aggregates.Auth
 {
-    public class UserProfile : BaseEntity
+    public sealed class UserProfile : BaseEntity
     {
         public Guid UserId { get; private set; }
         public User? User { get; private set; } = null;
@@ -17,8 +17,7 @@ namespace AE.Market.Domain.Aggregates.Auth
         public Address? Address { get; private set; }
         public ImageUrl? ProfileImage { get; private set; }
 
-        private UserProfile(Guid id)
-            : base(id) { }
+        private UserProfile() { }
 
         private UserProfile(Guid id, Guid userId, string firstName, string? lastName)
             : base(id)
@@ -30,61 +29,56 @@ namespace AE.Market.Domain.Aggregates.Auth
                 LastName = lastName;
         }
 
-        public static UserProfile Create(
-            Guid id,
-            Guid userId,
-            string firstName,
-            string? lastName
-        )
+        internal static UserProfile Create(Guid id, Guid userId, string firstName, string? lastName)
         {
             var profile = new UserProfile(id, userId, firstName, lastName);
-            profile.AddDominEvent(new UserProfileCreatedEvent(id, userId));
+            profile.AddDomainEvent(new UserProfileCreatedDomainEvent(id, userId));
             return profile;
         }
 
-        public UserProfile SetPhoneNumber(string phoneNumber)
+        internal UserProfile SetPhoneNumber(string phoneNumber)
         {
             Phone = phoneNumber;
-            AddDominEvent(new UserProfileUpdatedEvent(Id));
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
             return this;
         }
 
-        public UserProfile RemovePhoneNumber()
+        internal UserProfile RemovePhoneNumber()
         {
             Phone = null;
-            AddDominEvent(new UserProfileUpdatedEvent(Id));
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
 
             return this;
         }
 
-        public UserProfile SetAddress(string city, string country, string? addressline)
+        internal UserProfile SetAddress(string city, string country, string? addressline)
         {
             Address = Address.Create(country, city, addressline);
-            AddDominEvent(new UserProfileUpdatedEvent(Id));
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
 
             return this;
         }
 
-        public UserProfile RemoveAddress()
+        internal UserProfile RemoveAddress()
         {
             Address = null;
-            AddDominEvent(new UserProfileUpdatedEvent(Id));
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
 
             return this;
         }
 
-        public UserProfile SetProfileImage(string url)
+        internal UserProfile SetProfileImage(string url)
         {
             ProfileImage = url;
-            AddDominEvent(new UserProfileUpdatedEvent(Id));
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
 
             return this;
         }
 
-        public UserProfile RemoveProfileImage()
+        internal UserProfile RemoveProfileImage()
         {
             ProfileImage = null;
-            AddDominEvent(new UserProfileUpdatedEvent(Id));
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
 
             return this;
         }

@@ -1,6 +1,7 @@
 ﻿using AE.Market.Application.Common.Interfaces;
 using AE.Market.Application.Features.Auth.DTOs;
 using AE.Market.Application.Features.Auth.Specs;
+using AE.Market.Application.Services;
 using AE.Market.Domain.Aggregates.Auth;
 using AE.Market.Domain.Aggregates.Auth.Errors;
 using AE.Market.Domain.Aggregates.Auth.ValueObjects;
@@ -11,7 +12,11 @@ using MediatR;
 
 namespace AE.Market.Application.Features.Auth.Commands.Register
 {
-    public sealed class RegisterCommandHandler(IRepository<User> repo, IPasswordService passwordService, IJwtService jwt)
+    public sealed class RegisterCommandHandler(
+        IRepository<User> repo,
+        IPasswordService passwordService,
+        IJwtService jwt,
+        IRefreshTokenService refreshTokenService)
         : IRequestHandler<RegisterCommand, Result<TokensResponseDto>>
     {
         public async Task<Result<TokensResponseDto>> Handle(
@@ -27,11 +32,12 @@ namespace AE.Market.Application.Features.Auth.Commands.Register
 
             var hash = passwordService.HashPassword(request.Password);
             var user = User.Register(Guid.NewGuid(), email, hash);
-            var refreshToken = jwt.GenerateRefreshToken();
-            var accessToken = jwt.AuthanticateUser(user);
-            user.AddRefreshToken(refreshToken, TimeSpan.FromDays(10));
+            var refreshTokenString = jwt.GenerateRefreshToken();
+            var tokenHash = refreshTokenService.HashToken(refreshTokenString);
+            var refresh = user.AddRefreshToken(tokenHash, TimeSpan.FromDays(10));
+            var accessToken = jwt.AuthenticateUser(user);
             await repo.AddAsync(user, cancellationToken);
-            TokensResponseDto result = new(accessToken, refreshToken, user.Id);
+            TokensResponseDto result = new(accessToken, refreshTokenService.Encode(refresh.Id, refreshTokenString), user.Id);
             return Result<TokensResponseDto>.Success(result);
         }
     }

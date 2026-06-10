@@ -1,13 +1,14 @@
-﻿using AE.Market.API.Options;
+﻿using System.Text;
+using AE.Market.Infrastructure.Authentication.Options;
 using AE.Market.Application.Common.Interfaces;
-using AE.Market.Infrastructure.Authantication;
+using AE.Market.Application.Services;
+using AE.Market.Infrastructure.Authentication;
 using AE.Market.Infrastructure.Caching;
 using AE.Market.Infrastructure.Persistence;
 using AE.Market.Infrastructure.Persistence.Interceptors;
 using AE.Market.Infrastructure.Persistence.Outbox;
 using AE.Market.Infrastructure.Persistence.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
@@ -15,12 +16,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Quartz;
 using StackExchange.Redis;
-using System.Text;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Backplane.StackExchangeRedis;
 using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
-
-
 
 namespace AE.Market.Infrastructure
 {
@@ -31,7 +29,8 @@ namespace AE.Market.Infrastructure
             IConfiguration configuration
         )
         {
-            services.AddDatabases(configuration)
+            services
+                .AddDatabases(configuration)
                 .AddOutbox()
                 .AddCache(configuration)
                 .AddAuth(configuration);
@@ -58,10 +57,14 @@ namespace AE.Market.Infrastructure
             );
 
             // Unit of Work
-            services.AddScoped<IUnitOfWork,UnitOfWork>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // Repository
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddScoped(typeof(IReadRepository<>), typeof(Repository<>));
+
+            // Seeder
+            services.AddScoped<DbSeeder>();
 
             return services;
         }
@@ -139,28 +142,41 @@ namespace AE.Market.Infrastructure
             return services;
         }
 
-        private static IServiceCollection AddAuth(this IServiceCollection services, IConfiguration configuration)
+        private static IServiceCollection AddAuth(
+            this IServiceCollection services,
+            IConfiguration configuration
+        )
         {
             JwtOptions? jwtOptions = configuration.GetSection(JwtOptions.Section).Get<JwtOptions>();
-            if(jwtOptions is null) 
-                throw new ArgumentNullException(nameof(jwtOptions));
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(o =>
-            {
-                o.RequireHttpsMetadata = false;
-                o.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateTokenReplay = true,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret!)),
-                    ValidateIssuer = true,
-                    ValidIssuer = jwtOptions.Issuer,
-                    ValidateAudience = true,
-                    ValidAudience = jwtOptions.Audience,
-                    ClockSkew = TimeSpan.Zero,
-                    ValidateLifetime = true
 
-                };
-            });
+            if (jwtOptions is null)
+                throw new ArgumentNullException(nameof(jwtOptions));
+
+            services
+                .AddAuthentication(x =>
+                {
+                    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(o =>
+                {
+                    o.RequireHttpsMetadata = false;
+                    o.SaveToken = true;
+                    o.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateTokenReplay = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(jwtOptions.Secret!)
+                        ),
+                        ValidateIssuer = true,
+                        ValidIssuer = jwtOptions.Issuer,
+                        ValidateAudience = true,
+                        ValidAudience = jwtOptions.Audience,
+                        ClockSkew = TimeSpan.Zero,
+                        ValidateLifetime = true,
+                    };
+                });
             services.AddHttpContextAccessor();
             services.AddSingleton<JwtOptions>(jwtOptions);
             services.AddSingleton<IPasswordService, PasswordService>();

@@ -7,8 +7,6 @@ namespace AE.Market.Domain.Aggregates.Auth
     public sealed class UserProfile : BaseEntity
     {
         public Guid UserId { get; private set; }
-        public User? User { get; private set; } = null;
-
         public Name? FirstName { get; private set; }
         public Name? LastName { get; private set; }
         public string FullName =>
@@ -39,14 +37,16 @@ namespace AE.Market.Domain.Aggregates.Auth
         internal UserProfile SetPhoneNumber(string phoneNumber)
         {
             Phone = phoneNumber;
-            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(UserId));
+            UpdateLastModified();
             return this;
         }
 
         internal UserProfile RemovePhoneNumber()
         {
             Phone = null;
-            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(UserId));
+            UpdateLastModified();
 
             return this;
         }
@@ -54,7 +54,8 @@ namespace AE.Market.Domain.Aggregates.Auth
         internal UserProfile SetAddress(string city, string country, string? addressline)
         {
             Address = Address.Create(country, city, addressline);
-            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(UserId));
+            UpdateLastModified();
 
             return this;
         }
@@ -62,7 +63,19 @@ namespace AE.Market.Domain.Aggregates.Auth
         internal UserProfile RemoveAddress()
         {
             Address = null;
-            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(UserId));
+            UpdateLastModified();
+
+            return this;
+        }
+
+        internal UserProfile SetNames(string firstName, string? lastName)
+        {
+            FirstName = firstName;
+            if (!string.IsNullOrEmpty(lastName))
+                LastName = lastName;
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(UserId));
+            UpdateLastModified();
 
             return this;
         }
@@ -70,7 +83,8 @@ namespace AE.Market.Domain.Aggregates.Auth
         internal UserProfile SetProfileImage(string url)
         {
             ProfileImage = url;
-            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(UserId));
+            UpdateLastModified();
 
             return this;
         }
@@ -78,7 +92,8 @@ namespace AE.Market.Domain.Aggregates.Auth
         internal UserProfile RemoveProfileImage()
         {
             ProfileImage = null;
-            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(UserId));
+            UpdateLastModified();
 
             return this;
         }

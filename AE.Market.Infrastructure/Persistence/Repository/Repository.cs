@@ -77,5 +77,8 @@ namespace AE.Market.Infrastructure.Persistence.Repository
 
         public async Task<T?> GetBySpecWithTrackingAsync(ISpecification<T> spec, CancellationToken cancellationToken = default)
        => await SpecificationEvaluator<T>.GetQuery(baseCommand, spec).FirstOrDefaultAsync(cancellationToken);
+
+        public async Task<IReadOnlyList<T>> ListWithSpecTrackingAsync(ISpecification<T> spec, CancellationToken cancellationToken = default)
+            => await SpecificationEvaluator<T>.GetQuery(baseCommand, spec).ToListAsync(cancellationToken);
     }
 }

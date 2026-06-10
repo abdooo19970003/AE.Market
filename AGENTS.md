@@ -1,109 +1,117 @@
-<!-- BEGIN:dotnet-clean-architecture -->
 # AeMarket .NET Backend — Agent Rules
 
-This project is a **production-ready e-commerce backend** built with ASP.NET Core 10, EF Core 10, PostgreSQL, Elasticsearch, and Redis following **Clean Architecture + CQRS + Modular Monolith**.
-
-## Architecture Layers
+## Architecture
 
 ```
-AeMarket.Api               — Controllers, Middleware, Program.cs
-AeMarket.Application       — Commands, Queries, DTOs, FluentValidation, MediatR behaviors
-AeMarket.Domain            — Entities, Value Objects, Enums, Domain Events
-AeMarket.Infrastructure    — EF Core (Write/Read DbContext), Elasticsearch, Redis, External Services
-tests/                     — Unit + Integration tests (Testcontainers)
+AE.Market.slnx
+├── AE.Market.API/             — Controllers, Middleware, Program.cs, Dockerfile
+├── Application/               — Commands, Queries, DTOs, FluentValidation, MediatR behaviors
+├── Domain/                    — Entities, Value Objects, Enums, Domain Events (no deps beyond .NET)
+├── AE.Market.Infrastructure/  — EF Core, Redis/FusionCache, JWT, Quartz
+└── tests/
+    ├── AE.Market.Domain.Tests/           — xUnit + FluentAssertions (no Testcontainers)
+    ├── AE.Market.ArchitectureTests/      — NetArchTest.Rules
+    └── AE.Market.Integration.Tests/      — Testcontainers (PostgreSQL + Redis)
 ```
 
-5 projects, 1 solution. Domain boundaries are by **folder convention**, not project references.
+6 projects. Domain boundaries by **folder convention** (not separate projects). Currently only **Auth** aggregate is implemented (users, profiles, permissions, refresh tokens). Catalog/Pricing/Inventory/Cart/Orders are planned but absent.
 
-## Critical Rules
+## Critical Conventions
 
-### Two-DbContext Pattern
-- **WriteDbContext** — default tracking, used for commands and EF migrations
-- **ReadDbContext** — `QueryTrackingBehavior.NoTrackingWithIdentityResolution`, used for all queries
-- Both share entity configurations via `ApplyConfigurationsFromAssembly`
-- Never use `ReadDbContext` for writes
+### Result Pattern (Custom, NOT FluentResults)
+- `Domain.Common.Result` / `Domain.Common.Result<T>` — custom implementation, no NuGet package
+- Handlers return `Result<T>` or `Result`, never throw for control flow
+- Controller uses `result.ToActionResult()` / `.ToCreatedActionResult()` / `.ToNotFoundActionResult()` from `API/Helpers/ResultMapper.cs`
+- Error code prefix convention: `Application.Validation` → 400, `Application.NotFound` → 404, `Application.Conflict` → 409, `Application.*` → 500
 
-### CQRS with MediatR
-- Commands mutate state, Queries return data — never mix
-- Every command/query gets a FluentValidation validator
-- Pipeline behaviours in order: **Validation → Logging → Transaction** (commands only)
-- Handlers are thin — orchestrate, don't contain business logic
+### CQRS Markers (in `Application.Common.Interfaces`)
+- `ICommand`, `ICommand<TResponse>` — extend `IBaseCommand`, return `Result`/`Result<T>`
+- `IBaseQuery<TResponse>` — returns `Result<TResponse>`
+- Commands use `IRepository<T>`, queries use `IReadRepository<T>` (same class behind both, but read methods use `AsNoTracking()`)
+- `TransactionBehavior` wraps only `IBaseCommand` handlers
 
-### Result Pattern (FluentResults)
-- **All handlers return `Result<T>` or `Result`** — never throw for control flow
-- `Result.Fail(NotFoundError)` → Controller maps to 404
-- `Result.Fail(ValidationError)` → 400/422
-- `Result.Fail(ConflictError)` → 409
-- Exceptions only for programming errors, never domain logic
+### Pipeline Order
+ExceptionHandler → Logging → Caching → Validation → Transaction
+Registered in `Application/DependencyInjection.cs:17-21`.
 
-### Domain Model
-- Rich domain model with value objects (`Money`, `Slug`, `Sku`, `Email`, `PasswordHash`)
-- Override `Equals` / `GetHashCode` on all value objects
-- Domain events stored in `BaseEntity._domainEvents` list
-- Events cleared after `SaveChangesAsync` via interceptor → outbox
+### Caching
+- Marker interface `ICachedQuery` on query records (fields: `CacheKey`, `AbsoluteExpiration`, `SlidingExpiration`)
+- `CachingBehavior` auto-caches queries that implement `ICachedQuery`
+- FusionCache via `ICacheService` (not raw `IDistributedCache`)
 
 ### Domain Events & Outbox
-- Entities call `AddDomainEvent(new SomeEvent(...))` inside command methods
-- `SaveChangesInterceptor` collects events before save, writes to `outbox_messages` table after save
-- `OutboxProcessorJob` (Quartz.NET, 5s poll) publishes to MediatR
-- Retry with exponential backoff, dead-letter after 10 failures
-- Handlers are idempotent — duplicate delivery is safe
+- Entities call `AddDomainEvent(...)` in static factory/command methods
+- `DomainEventDispatcher` (SaveChangesInterceptor) writes to `outbox.outbox_messages` table
+- `OutboxProcessorJob` (Quartz.NET) polls every **100 seconds** (not 5), dead-letter after 10 retries
+- Post-save: interceptor calls `ClearDomainEvents()`
+- Raw SQL `FOR UPDATE SKIP LOCKED` for message consumption
 
-### EF Core Conventions
-- Use `SplitQuery` for includes that could cause cartesian explosion
-- Prefer compiled queries for hot-path reads
-- **Add explicit indexes on all FK columns** (EF doesn't auto-index FKs)
-- `numeric` columns map to `decimal` in C# with `.HasPrecision(12, 2)`
-- All entity configurations in dedicated `IEntityTypeConfiguration<T>` files
-- Partial unique indexes where needed (e.g. `WHERE is_active = true` on prices)
+### EF Core
+- `AppDbContext` uses `ApplyConfigurationsFromAssembly` — all configs in `IEntityTypeConfiguration<T>` files under `Persistence/Configurations/`
+- All read queries go through `SpecificationEvaluator<T>` with `AsNoTracking()`
+- Dev drops & recreates DB on startup: `Program.cs:64-74`
+- No compiled queries yet, no explicit FK indexes yet (both aspirational)
 
-### Coding Conventions
+### Mapping
+- Mapster behind `IMapper` / `AppMapper` wrapper (in `Application.Common.Mapping`)
+- Configured globally in `MappingConfig.cs` via `TypeAdapterConfig.GlobalSettings`
+- Inject `IMapper`, do not call `Adapt<>()` directly
+
+### Authentication
+- Custom JWT (not ASP.NET Identity)
+- Permission-based via `[HasPermission(Permission.X)]` attribute + `PermissionBasedAuthFilter`
+- Current user resolved via `ICurrentUser` / `CurrentUserService`
+
+### Controllers
+- Primary constructor with `IMediator mediator`, `sealed class`
+- `[Route("api/[controller]")]`, `[ApiController]`
+- Handlers called with `await mediator.Send(cmd)`, result piped through `result.ToActionResult()`
+
+### Coding Style
 - File-scoped namespaces (`namespace X.Y;`)
-- Primary constructors for DI dependencies
-- `Async` suffix on async methods
-- `CancellationToken` as last parameter, pass to all EF/MediatR calls
-- Mapster for entity → DTO mapping (not AutoMapper)
-- `FluentValidation` for input validation (not data annotations)
+- Primary constructors for DI
+- `Async` suffix on async methods, `CancellationToken` as last param
+- Value objects are `record` types implementing `IValueObject` (or standalone `record`)
 
-### Database Schemas
-- `auth` — users, refresh_tokens, user_profiles
-- `catalog` — categories, products, variants, images, attributes
-- `pricing` — variant_prices, price_history
-- `inventory` — stock_entries
-- `cart` — carts, cart_items
-- `orders` — orders, order_items, idempotency_requests
-- `outbox` — outbox_messages
+## Commands
 
-### Search (Elasticsearch)
-- Index name: `products-v1`
-- Sync via MediatR notification handlers on domain events (processed through outbox)
-- Full re-index via Quartz.NET nightly job
-- Faceted search with dynamic attribute filters
+```powershell
+# Build
+dotnet build .\AE.Market.slnx
 
-### Caching (FusionCache)
-- Always use FusionCache, not raw `IDistributedCache`
-- Cache key convention: `{entity}:{type}:{id}` (e.g. `product:detail:42`)
-- Invalidate cache entries via notification handlers (processed through outbox)
-- Stampede protection enabled by default
+# Run domain tests only (fast, no infra)
+dotnet test .\tests\AE.Market.Domain.Tests\AE.Market.Domain.Tests.csproj
 
-### Idempotency
-- `POST /api/orders` requires `Idempotency-Key` header
-- Keys stored in `orders.idempotency_requests` table
-- Duplicate key returns cached response — never creates duplicate order
+# Run architecture tests
+dotnet test .\AE.Market.ArchitectureTests\AE.Market.ArchitectureTests.csproj
 
-## Sprint Reference
+# Run all tests
+dotnet test .\AE.Market.slnx
 
-The full implementation plan is in `BACKEND_PLAN.md` — 12 sprints + 4 bonus sprints. Each sprint ships runnable API endpoints with tests. Always consult it before starting work on a new sprint.
+# Dev — starts postgres, redis, seq via Docker Compose + API
+docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 
-## Technology Stack
-- ASP.NET Core 10, EF Core 10, PostgreSQL 17
-- MediatR + FluentValidation + FluentResults
-- Mapster (mapping)
-- Elasticsearch 8 (search)
-- FusionCache + Redis (caching)
-- Serilog + OpenTelemetry (observability)
-- Quartz.NET (scheduled jobs + outbox processor)
-- JWT custom auth (not ASP.NET Identity)
-- Testcontainers (integration tests)
-- Docker Compose (dev + prod environments)
-<!-- END:dotnet-clean-architecture -->
+# Or via VS: F5 uses launchSettings.json (Docker Compose profile)
+```
+
+## Known Gaps (from BACKEND_PLAN.md, not yet implemented)
+- **No CI workflow** yet (`.github/workflows/` is empty)
+- **No Elasticsearch** — no packages, no indices, no queries
+- **Outbox interval**: 100s (not 5s as documented in plan)
+- Only **Auth** feature has code; Catalog, Pricing, etc. are stubs at most
+
+## Dev Environment
+- Docker Compose: postgres:16-alpine, redis, datalust/seq
+- Connection strings in `appsettings.Development.json` (gitignored):
+  - `Host=postgres;Port=5432;Database=marketDb;Username=postgres;Password=password`
+  - `redis:6379,password=password`
+- JWT dev secret is read from environment variable `Jwt__Secret` or `appsettings.Development.json`
+- API docs at `/scalar` (not Swagger)
+- Seq UI at `http://localhost:8082`
+
+## Seed Users (created on first startup in Development mode, drop DB to re-seed)
+
+| Email | Password | Permissions |
+|---|---|---|
+| `admin@aemarket.com` | `Admin@12345` | AccessUsers, MutateUsers |
+| `client@aemarket.com` | `Client@12345` | (none) |

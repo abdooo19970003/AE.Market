@@ -12,6 +12,8 @@
   </Folder>
   <Folder Name="/Tests/">
     <Project Path="AE.Market.ArchitectureTests/AE.Market.ArchitectureTests.csproj" />
+    <Project Path="tests/AE.Market.Domain.Tests/AE.Market.Domain.Tests.csproj" />
+    <Project Path="tests/AE.Market.Integration.Tests/AE.Market.Integration.Tests.csproj" />
   </Folder>
   <Project Path="docker-compose.dcproj">
     <Build />

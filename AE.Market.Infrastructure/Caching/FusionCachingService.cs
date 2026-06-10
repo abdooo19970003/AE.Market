@@ -1,4 +1,4 @@
-﻿using AE.Market.Application.Common.Interfaces;
+﻿using AE.Market.Application.Services;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace AE.Market.Infrastructure.Caching

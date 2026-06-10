@@ -1,5 +1,4 @@
 ﻿using AE.Market.Domain.Common;
-using AE.Market.Domain.Common.DomainErrors;
 
 namespace AE.Market.Domain.Aggregates.Auth.ValueObjects
 {
@@ -12,9 +11,9 @@ namespace AE.Market.Domain.Aggregates.Auth.ValueObjects
             Country = country;
         }
 
-        public string? AddressLine { get; private set; }
-        public string? City { get; private set; }
-        public string? Country { get; private set; }
+        public string? AddressLine { get; init; }
+        public string? City { get; init; }
+        public string? Country { get; init; }
 
         public static Address Create(string country, string city, string? addressLine)
         {

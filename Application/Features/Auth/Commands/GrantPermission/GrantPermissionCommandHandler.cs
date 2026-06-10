@@ -9,7 +9,8 @@ namespace AE.Market.Application.Features.Auth.Commands.GrantPermission
 {
     internal sealed class GrantPermissionCommandHandler(
         IRepository<User> userRepo,
-        IRepository<UserPermission> permissionRepo
+        IRepository<UserPermission> permissionRepo,
+        ICurrentUser currentUser
     ) : IRequestHandler<GrantPermissionCommand, Result<bool>>
     {
         public async Task<Result<bool>> Handle(
@@ -17,6 +18,8 @@ namespace AE.Market.Application.Features.Auth.Commands.GrantPermission
             CancellationToken cancellationToken
         )
         {
+            if (!currentUser.Permissions.Contains(Permission.MutateUsers))
+                return Result<bool>.Fail(AuthErrors.InsufficientPermissions);
             var user = await userRepo.GetByIdWithTrackingAsync(request.UserId, cancellationToken);
             if (user == null)
                 return Result<bool>.Fail(AuthErrors.UserNotFound);

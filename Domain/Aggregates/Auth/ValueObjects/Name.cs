@@ -19,17 +19,16 @@ namespace AE.Market.Domain.Aggregates.Auth.ValueObjects
         public static Name Create(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
-                throw Exceptions.Profile.InvalidName;
+                Guard.AgainstNullOrWhiteSpace(value, nameof(Name));
             if (value.Trim().Length < 3)
-                throw Exceptions.Profile.NameTooShort;
-
+                Guard.AgainstStringTooShort(value, "AE.Market.Domain.Aggregates.Auth.ValueObjects.Name", 3);
             if (!NamesRegex.IsMatch(value))
-                throw Exceptions.Profile.InvalidName;
+                Guard.AgainstInvalidPattern(value, nameof(Name), NamesRegex);
 
             return new Name(value);
         }
         public static implicit operator Name(string value) => Create (value);
-        public static implicit operator string(Name obj) => obj.Value;
+        public static implicit operator string(Name? obj) => obj?.Value ?? string.Empty;
 
     }
 }

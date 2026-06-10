@@ -1,5 +1,4 @@
 ﻿using AE.Market.Domain.Common;
-using AE.Market.Domain.Common.DomainErrors;
 
 namespace AE.Market.Domain.Aggregates.Auth.ValueObjects
 {
@@ -22,7 +21,7 @@ namespace AE.Market.Domain.Aggregates.Auth.ValueObjects
             return new ImageUrl(value);
         }
         public static implicit operator ImageUrl(string value) => Create(value);
-        public static implicit operator string(ImageUrl obj) => obj.Value;
+        public static implicit operator string(ImageUrl? obj) => obj?.Value ?? string.Empty;
 
     }
 }

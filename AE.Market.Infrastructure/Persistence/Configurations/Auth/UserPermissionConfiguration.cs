@@ -9,7 +9,7 @@ namespace AE.Market.Infrastructure.Persistence.Configurations.Auth
         public void Configure(EntityTypeBuilder<UserPermission> builder)
         {
             builder.ToTable("user_permissions", "auth").HasKey(p => new { p.Permission, p.UserId });
-            builder.HasOne(p => p.User)
+            builder.HasOne<User>()
                 .WithMany(u => u.Permissions)
                 .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Restrict);

@@ -37,10 +37,17 @@ namespace AE.Market.Domain.Common
                 throw new DomainException($"InvalidPattern.{parameterName}", $" Invalid pattern for {parameterName}");
         }
 
-        public static void AginstInvalidUrl(string input, string parameterName)
+        public static void AgainstInvalidUrl(string input, string parameterName)
         {
             if(!Uri.TryCreate(input, UriKind.Absolute, out _))
                 throw new DomainException( $"InvalidPattern.{parameterName}", $" Invalid pattern for {parameterName}");
+        }
+        public static void AgainstStringTooShort(string input, string parameterName, int minLength)
+        {
+            if(input.Trim().Length < minLength)
+            {
+                throw new DomainException(parameterName,$"{parameterName.Split(".").Last()} should be at least {minLength} characters.");
+            }
         }
 
     }

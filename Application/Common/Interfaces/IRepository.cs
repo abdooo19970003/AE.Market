@@ -22,5 +22,6 @@ namespace AE.Market.Application.Common.Interfaces
         void DeleteRange(IEnumerable<T> entities);
         Task<T?> GetByIdWithTrackingAsync(Guid id, CancellationToken cancellationToken = default);
         Task<T?> GetBySpecWithTrackingAsync(ISpecification<T> spec, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<T>> ListWithSpecTrackingAsync(ISpecification<T> spec, CancellationToken cancellationToken = default);
     }
 }

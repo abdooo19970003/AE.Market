@@ -1,5 +1,7 @@
-﻿using AE.Market.Application.Common.Interfaces;
+﻿using AE.Market.Application.Common.Abstracts;
+using AE.Market.Application.Common.Interfaces;
 using AE.Market.Domain.Common;
+using AE.Market.Domain.Exceptions;
 using MediatR;
 using System.Data;
 using System.Reflection;
@@ -20,13 +22,19 @@ namespace AE.Market.Application.Common.Behaviors
             try
             {
                 TResponse response = await next(cancellationToken);
-                await unitOfWork.CommitTransactionAsync(cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
+                await unitOfWork.CommitTransactionAsync(cancellationToken);
                 return response;
             }
             catch (Exception ex)
             {
-                await unitOfWork.RollbackTransactionAsync(cancellationToken);
+                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
+                Error error = ex switch
+                {
+                    DomainException de => new(de.Code, de.Message),
+                    _ => ApplicationErrors.ApplicationError(nameof(TransactionBehavior<,>), ex.Message),
+                };
+                var errorList = new List<Error> { new(ex.Source ?? "TransactionBehavior", ex.Message) };
                 if (typeof(TResponse).IsGenericType)
                 {
                     var resultType = typeof(TResponse).GetGenericArguments()[0];
@@ -35,24 +43,11 @@ namespace AE.Market.Application.Common.Behaviors
                         .GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
                         .First(m => m.Name == nameof(Result.Fail) && m.GetParameters().Length == 2);
                     return (TResponse)
-                        failMethod.Invoke(
-                            null,
-                            [
-                                ApplicationErrors.ApplicationError(nameof(TransactionBehavior<,>),ex.Message),
-                                new List<Error>
-                                {
-                                    new(ex.Source ?? "TransactionBehavior", ex.Message),
-                                },
-                            ]
-                        )!;
+                        failMethod.Invoke(null, [error, errorList])!;
                 }
                 else
                     return (TResponse)
-                        (object)
-                            Result.Fail(
-                                ApplicationErrors.ApplicationError(nameof(TransactionBehavior<,>),"Transaction Error"),
-                                [new(ex.Source ?? "TransactionBehavior", ex.Message)]
-                            );
+                        (object)Result.Fail(error, errorList);
             }
         }
     }

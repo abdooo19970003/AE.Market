@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using AE.Market.Application.Common.Interfaces;
+using AE.Market.Application.Common.Abstracts;
+using AE.Market.Application.Services;
 using MediatR;
 
 namespace AE.Market.Application.Common.Behaviors

@@ -13,23 +13,22 @@ namespace AE.Market.Infrastructure.Persistence.Configurations.Auth
                 .HasKey(x => x.Id);
             builder.HasIndex(x => x.FirstName);
 
-            builder
-                .HasOne(p => p.User)
+            builder.HasOne<User>()
                 .WithOne(u => u.Profile)
                 .HasForeignKey<UserProfile>(p => p.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Property(x => x.FirstName)
-                .HasConversion(v => v.Value, v => (Name)v)
+                .HasConversion(v => v == null ? null : v.Value, v => v == null ? null : (Name)v)
                 .HasMaxLength(50);
             builder.Property(x => x.LastName)
-                .HasConversion(v => v.Value, v => (Name)v)
+                .HasConversion(v => v == null ? null : v.Value, v => v == null ? null : (Name)v)
                 .HasMaxLength(50);
             builder.Property(x => x.Phone)
-                .HasConversion(v => v.Value, v => (PhoneNumber)v)
+                .HasConversion(v => v == null ? null : v.Value, v => v == null ? null : (PhoneNumber)v)
                 .HasMaxLength(50);
             builder.Property(x => x.ProfileImage)
-                .HasConversion(v => v.Value, v => (ImageUrl)v)
+                .HasConversion(v => v == null ? null : v.Value, v => v == null ? null : (ImageUrl)v)
                 .HasMaxLength(1000);
             builder.ComplexProperty(x => x.Address).HasDiscriminator();
                 

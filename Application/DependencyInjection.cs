@@ -1,4 +1,7 @@
 ﻿using AE.Market.Application.Common.Behaviors;
+using AE.Market.Application.Common.Interfaces;
+using AE.Market.Application.Common.Mapping;
+using AE.Market.Application.Services;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +24,11 @@ namespace AE.Market.Application
             });
 
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly,includeInternalTypes:true);
-            
+
+            services.AddSingleton(MappingConfig.Configure());
+            services.AddScoped<IMapper, AppMapper>();
+            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+
             return services;
         }
     }

@@ -28,9 +28,25 @@ namespace AE.Market.Domain.Aggregates.Auth.Errors
             "Auth.Email.AlreadyExist",
             "Invalid email address.This email is already exist in our database try login"
         );
+        public static readonly Error InvalidCredentials = new(
+            "Auth.User.InvalidCredentials",
+            "Invalid email or password."
+        );
         public static readonly Error UserNotFound = new(
             "Auth.User.NotFound",
             "Invalid Credentials"
+        );
+        public static readonly Error UserDisabled = new(
+            "Auth.User.Disabled",
+            "User account is disabled."
+        );
+        public static readonly Error InsufficientPermissions = new(
+            "Auth.User.InsufficientPermissions",
+            "You do not have permission to perform this action."
+        );
+        public static readonly Error PermissionNotFound = new(
+            "Auth.Permission.NotFound",
+            "The specified permission was not found for this user."
         );
     }
 }

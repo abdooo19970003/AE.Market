@@ -1,6 +1,4 @@
 ﻿using AE.Market.Domain.Common;
-using AE.Market.Domain.Common.DomainErrors;
-using AE.Market.Domain.Exceptions;
 using System.Text.RegularExpressions;
 
 namespace AE.Market.Domain.Aggregates.Auth.ValueObjects

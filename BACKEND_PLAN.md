@@ -174,8 +174,8 @@ AeMarket.sln
 │   │   │   │   ├── LoggingBehavior.cs
 │   │   │   │   └── TransactionBehavior.cs
 │   │   │   ├── Interfaces/
-│   │   │   │   ├── IWriteDbContext.cs
-│   │   │   │   ├── IReadDbContext.cs
+│   │   │   │   ├── IRepository.cs
+│   │   │   │   ├── IReadRepository.cs
 │   │   │   │   ├── IJwtService.cs
 │   │   │   │   ├── ICacheService.cs
 │   │   │   │   ├── IElasticsearchService.cs
@@ -189,8 +189,8 @@ AeMarket.sln
 │   │   │       └── PaginationParams.cs
 │   │   ├── Features/
 │   │   │   ├── Auth/
-│   │   │   │   ├── Commands/Register/RegisterCommand.cs + Handler + Validator
-│   │   │   │   ├── Queries/Login/LoginQuery.cs + Handler + Validator
+│   │   │   │   ├── CommandsregisterregisterCommand.cs + Handler + Validator
+│   │   │   │   ├── QueriesloginloginQuery.cs + Handler + Validator
 │   │   │   │   └── DTOs/TokenResponse.cs, UserDto.cs
 │   │   │   ├── Categories/
 │   │   │   │   ├── Commands/CreateCategory/
@@ -219,8 +219,10 @@ AeMarket.sln
 │   ├── AeMarket.Infrastructure/
 │   │   ├── AeMarket.Infrastructure.csproj
 │   │   ├── Persistence/
-│   │   │   ├── WriteDbContext.cs
-│   │   │   ├── ReadDbContext.cs
+│   │   │   ├── AppDbContext.cs
+│   │   │   ├── Repository/
+│   │   │   │   ├── Repository.cs
+│   │   │   │   └── SpecificationEvaluator.cs
 │   │   │   ├── Configurations/
 │   │   │   │   ├── Auth/
 │   │   │   │   ├── Catalog/
@@ -319,14 +321,14 @@ public async Task<Result<ProductDto>> Handle(CreateProductCommand cmd, Cancellat
 
 Exceptions are only thrown for **programming errors** (null arguments where they shouldn't be, impossible states). Domain logic errors, validation failures, and "not found" are all `Result.Fail`.
 
-### Two-DbContext Pattern
+### Two-Repository Pattern
 
-| Context | Tracking | Used For |
+| Repository | Tracking | Used For |
 |---|---|---|
-| `WriteDbContext` | Default | Commands, outbox writes, migrations |
-| `ReadDbContext` | `NoTrackingWithIdentityResolution` | All read queries |
+| `IRepository<T>` | Default (tracked) | Commands, writes, outbox |
+| `IReadRepository<T>` | `AsNoTracking()` | All read queries |
 
-Shared `IEntityTypeConfiguration<T>` classes. Same DB, same connection string. Migrations generated from `WriteDbContext` only.
+Both implemented by the same `Repository<T>` class behind the scenes—read methods always apply `AsNoTracking()`. Shared `IEntityTypeConfiguration<T>` classes. Same `AppDbContext`, same connection string. Queries go through `SpecificationEvaluator<T>` (criteria, includes, ordering, pagination).
 
 ### Cart Persistence — PostgreSQL Only
 
@@ -361,7 +363,7 @@ This is the **backbone of cross-domain communication** without coupling.
        ↓
 2. SaveChangesAsync()
        ↓
-3. SaveChangesInterceptor<WriteDbContext>
+3. SaveChangesInterceptor (DomainEventDispatcher)
        ├── BeforeSave: collect events from tracked entities
        └── AfterSave: write events to outbox_messages table
             └── entity.ClearDomainEvents()
@@ -432,8 +434,8 @@ Each sprint builds on the previous. Every sprint ships:
 |---|---|
 | **Domain** | `User`, `RefreshToken`, `UserProfile`, `UserPermission` entities; `Permission` enum (`AccessUsers`, `MutateUsers`); `Email`, `PasswordHash` VOs; `UserRegisteredEvent` |
 | **Application** | `RegisterCommand` (validate email uniqueness, password policy), `LoginQuery`, `RefreshTokenCommand`, `LogoutCommand`; FluentValidation for all |
-| **Infrastructure** | `WriteDbContext` + `ReadDbContext` scaffolding; `auth` schema; `UserConfiguration`, `RefreshTokenConfiguration`; `JwtService` (access + refresh tokens), `PasswordService` (bcrypt) |
-| **Api** | `AuthController`: `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/logout`, `GET /api/auth/me`; `ExceptionHandlingMiddleware` with Result → HTTP mapping |
+| **Infrastructure** | `AppDbContext` + `Repository<T>` (implements both `IRepository<T>` and `IReadRepository<T>`); `auth` schema; `UserConfiguration`, `RefreshTokenConfiguration`; `JwtService` (access + refresh tokens), `PasswordService` (bcrypt) |
+| **Api** | `AuthController`: `POST /api/authregister`, `POST /api/authlogin`, `POST /api/authrefresh`, `POST /api/auth/logout`, `GET /api/authme`; `ExceptionHandlingMiddleware` with Result → HTTP mapping |
 | **Tests** | Unit: password hashing, token generation/validation. Integration: register → login → verify token → refresh → me |
 
 **Outbox:** Not yet — Auth has no cross-context subscribers in sprint 1. The interceptor is wired but idle.
@@ -450,7 +452,7 @@ Each sprint builds on the previous. Every sprint ships:
 |---|---|
 | **Domain** | `Category` entity (self-referencing parentId); `CategoryCreatedEvent` |
 | **Application** | `CreateCategoryCommand` (slug generation, parent validation), `UpdateCategoryCommand`, `DeleteCategoryCommand` (prevent if products exist); `GetCategoryTreeQuery` (recursive CTE via raw SQL or `FromSql`), `GetCategoryBySlugQuery` |
-| **Infrastructure** | `CategoryConfiguration`; `catalog` schema; compiled query for root categories; `catalog` schema added to `WriteDbContext` + `ReadDbContext` |
+| **Infrastructure** | `CategoryConfiguration`; `catalog` schema; compiled query for root categories; `catalog` schema added to `AppDbContext` |
 | **Api** | `CategoriesController`: `GET /api/categories` (tree), `GET /api/categories/{slug}`, `POST /api/categories`, `PATCH /api/categories/{id}`, `DELETE /api/categories/{id}`; permission check on write endpoints |
 | **Tests** | Integration: create root + sub-categories → query tree → verify nesting, prevent delete with products |
 
@@ -527,7 +529,7 @@ Each sprint builds on the previous. Every sprint ships:
 | **Domain** | `Cart` (userId nullable, sessionId, status), `CartItem` (variantId, quantity, addedAt); `ItemAddedToCartEvent`, `CartMergedEvent` |
 | **Application** | `AddToCartCommand` (upsert: increment if exists, insert if new), `RemoveFromCartCommand`, `UpdateCartItemQuantityCommand`, `GetCartQuery`, `MergeGuestCartCommand` (transfers items to user on login) |
 | **Infrastructure** | `cart` schema; cart configs; guest session by `SessionId` cookie (set by middleware) |
-| **Api** | `CartController`: `GET /api/cart`, `POST /api/cart/items`, `PATCH /api/cart/items/{variantId}`, `DELETE /api/cart/items/{variantId}`, `POST /api/cart/merge` |
+| **Api** | `CartController`: `GET /api/cart`, `POST /api/cart/items`, `PATCH /api/cart/items/{variantId}`, `DELETE /api/cart/items/{variantId}`, `POST /api/cartmerge` |
 | **Tests** | Integration: guest add items → register → merge cart → verify all items transferred; duplicate add increments quantity |
 
 ---
@@ -722,9 +724,9 @@ These are the **interfaces between domains**. Defined in `Application/Common/Int
 | GET | `/api/products/{id}/detail` | 4 | Full detail: attrs + variants + prices + images |
 | GET | `/api/search` | 9 | Full-text search |
 | GET | `/api/search/suggest` | 9 | Autocomplete |
-| POST | `/api/auth/register` | 1 | Customer registration |
-| POST | `/api/auth/login` | 1 | Login |
-| POST | `/api/auth/refresh` | 1 | Refresh token |
+| POST | `/api/authregister` | 1 | Customer registration |
+| POST | `/api/authlogin` | 1 | Login |
+| POST | `/api/authrefresh` | 1 | Refresh token |
 | GET | `/sitemap.xml` | 10 | XML sitemap |
 | GET | `/health` | 11 | Liveness |
 | GET | `/health/ready` | 11 | Readiness |
@@ -734,12 +736,12 @@ These are the **interfaces between domains**. Defined in `Application/Common/Int
 | Method | Path | Sprint | Description |
 |---|---|---|---|
 | POST | `/api/auth/logout` | 1 | Logout |
-| GET | `/api/auth/me` | 1 | Current user |
+| GET | `/api/authme` | 1 | Current user |
 | GET | `/api/cart` | 7 | Get cart |
 | POST | `/api/cart/items` | 7 | Add to cart |
 | PATCH | `/api/cart/items/{variantId}` | 7 | Update quantity |
 | DELETE | `/api/cart/items/{variantId}` | 7 | Remove from cart |
-| POST | `/api/cart/merge` | 7 | Merge guest cart |
+| POST | `/api/cartmerge` | 7 | Merge guest cart |
 | POST | `/api/orders` | 8 | Place order (Idempotency-Key required) |
 | GET | `/api/orders` | 8 | Order history |
 | GET | `/api/orders/{id}` | 8 | Order detail |
@@ -804,7 +806,7 @@ These are the **interfaces between domains**. Defined in `Application/Common/Int
 ## Architecture Decision Records (Topics to Document)
 
 1. Modular monolith over microservices — why one solution, folder boundaries
-2. Two-DbContext pattern — tracking vs no-tracking, shared configs
+2. Two-Repository pattern — `IRepository<T>` (tracked writes) vs `IReadRepository<T>` (`AsNoTracking()` reads), same `Repository<T>` class implements both
 3. Result pattern over exceptions — FluentResults for domain errors
 4. Outbox + MediatR over direct event publishing — reliability + at-least-once
 5. PostgreSQL schemas over separate databases — operational simplicity

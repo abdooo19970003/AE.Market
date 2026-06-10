@@ -9,6 +9,7 @@ namespace AE.Market.Domain.Aggregates.Auth
         public EmailAddress Email { get; private set; }
         public PasswordHash PasswordHash { get; private set; }
         public UserProfile? Profile { get; private set; }
+        public bool IsActive { get; private set; } = true;
 
         private User(Guid id, EmailAddress emailAddress, PasswordHash hash)
             : base(id)
@@ -17,7 +18,7 @@ namespace AE.Market.Domain.Aggregates.Auth
             PasswordHash = hash;
         }
 
-        // Paramaterless constructor
+        // Parameterless constructor
         private User() { }
 
         // static factory method
@@ -30,13 +31,31 @@ namespace AE.Market.Domain.Aggregates.Auth
             return user;
         }
 
-        // Permissions Managment
+        public void Disable()
+        {
+            if (!IsActive)
+                return;
+            IsActive = false;
+            AddDomainEvent(new UserDisabledDomainEvent(Id));
+            UpdateLastModified();
+        }
+
+        public void Enable()
+        {
+            if (IsActive)
+                return;
+            IsActive = true;
+            AddDomainEvent(new UserEnabledDomainEvent(Id));
+            UpdateLastModified();
+        }
+
+        // Permissions Management
         private readonly List<UserPermission> _permissions = new List<UserPermission>();
         public IReadOnlyCollection<UserPermission> Permissions => _permissions.AsReadOnly();
 
         public UserPermission AddPermission(Permission permission)
         {
-            UserPermission NewPermission = new(Guid.NewGuid(), this.Id, permission);
+            var NewPermission = UserPermission.Create(Guid.NewGuid(), this.Id, permission);
             _permissions.Add(NewPermission);
             UpdateLastModified();
             return NewPermission;
@@ -64,7 +83,7 @@ namespace AE.Market.Domain.Aggregates.Auth
         private readonly List<RefreshToken> _refreshTokens = new List<RefreshToken>();
         public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens.AsReadOnly();
 
-        public RefreshToken AddRefreshToken(string token, TimeSpan expiry)
+        public RefreshToken AddRefreshToken(string tokenHash, TimeSpan expiry)
         {
             if (_refreshTokens.Count(t => !t.IsExpired) >= 5)
             {
@@ -77,7 +96,7 @@ namespace AE.Market.Domain.Aggregates.Auth
                     _refreshTokens.Remove(oldest);
                 }
             }
-            var newToken = new RefreshToken(Guid.NewGuid(), Id, token, DateTime.UtcNow + expiry);
+            var newToken = RefreshToken.Create(Guid.NewGuid(), Id, tokenHash, DateTime.UtcNow + expiry);
             _refreshTokens.Add(newToken);
             return newToken;
         }
@@ -91,34 +110,41 @@ namespace AE.Market.Domain.Aggregates.Auth
             _refreshTokens.Clear();
         }
 
-        public RefreshToken RotateRefreshToken(string oldToken, string newToken, TimeSpan expiry)
+        public RefreshToken RotateRefreshToken(string oldTokenHash, string newTokenHash, TimeSpan expiry)
         {
-            var token = _refreshTokens.FirstOrDefault(t => t.Token == oldToken);
+            var token = _refreshTokens.FirstOrDefault(t => t.TokenHash == oldTokenHash);
             Guard.AgainstNull(token, nameof(token));
 
-            // Replay Attack Detaction
+            // Replay Attack Detection
             if (token?.ConsumedAt is not null)
             {
                 // Force Logout
                 RevokeRefreshTokens();
                 // Rise Domain Event for notification and analytics ...
-                AddDomainEvent(new RefreshTokenReusedDomainEvent(Id, oldToken));
+                AddDomainEvent(new RefreshTokenReusedDomainEvent(Id, oldTokenHash));
                 //return null;
                 throw Exceptions.Auth.ReplayAttackDetected;
             }
             if (token.IsExpired || token.IsDeleted)
                 throw Exceptions.Auth.TokenExpiredOrRevoked;
             token.MarkConsumed();
-            return AddRefreshToken(newToken, expiry);
+            return AddRefreshToken(newTokenHash, expiry);
         }
 
-        // User Profile Manegment
+        // User Profile Management
         public void CreateProfile(Guid profileId, string firstName, string? lastName)
         {
             if (Profile is not null)
                 throw new InvalidOperationException("Profile already exists.");
 
             Profile = UserProfile.Create(profileId, this.Id, firstName, lastName);
+            UpdateLastModified();
+        }
+
+        public void UpdateProfileNames(string firstName, string? lastName)
+        {
+            GuardAgainstMissingProfile();
+            Profile!.SetNames(firstName, lastName);
             UpdateLastModified();
         }
 
@@ -150,7 +176,7 @@ namespace AE.Market.Domain.Aggregates.Auth
         {
             GuardAgainstMissingProfile();
             if (string.IsNullOrEmpty(url))
-                Profile!.SetProfileImage(url);
+                Profile!.RemoveProfileImage();
             else
                 Profile!.SetProfileImage(url);
             UpdateLastModified();

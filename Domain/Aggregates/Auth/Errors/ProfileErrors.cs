@@ -4,6 +4,14 @@ namespace AE.Market.Domain.Aggregates.Auth.Errors
 {
     public static class ProfileErrors
         {
+            public static readonly Error ProfileAlreadyExists = new(
+                "Domain.Profile.AlreadyExists",
+                "User profile already exists."
+                );
+            public static readonly Error ProfileNotFound = new(
+                "Domain.Profile.NotFound",
+                "User profile not found. Create one first."
+                );
             public static readonly Error InvalidPhoneNumber = new(
                 "Domain.Profile.Phone.Invalid",
                 "Invalid phone number, phone number should containe only 0-9 numbers e.g:05554443322"

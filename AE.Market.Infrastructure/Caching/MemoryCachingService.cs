@@ -1,4 +1,4 @@
-﻿using AE.Market.Application.Common.Interfaces;
+﻿using AE.Market.Application.Services;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace AE.Market.Infrastructure.Caching

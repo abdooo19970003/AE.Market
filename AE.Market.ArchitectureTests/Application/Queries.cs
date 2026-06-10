@@ -1,4 +1,5 @@
-﻿using AE.Market.Application.Common.Interfaces;
+﻿using AE.Market.Application.Common.Abstracts;
+using AE.Market.Application.Common.Interfaces;
 using FluentAssertions;
 using NetArchTest.Rules;
 

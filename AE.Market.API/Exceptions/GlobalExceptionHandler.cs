@@ -1,10 +1,11 @@
 ﻿using AE.Market.Domain.Exceptions;
+using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AE.Market.API.Exceptions
 {
-    public class GlobalExceptionHandler(
+    public sealed class GlobalExceptionHandler(
         ILogger<GlobalExceptionHandler> logger,
         IProblemDetailsService problemDetailsService
     ) : IExceptionHandler
@@ -15,12 +16,17 @@ namespace AE.Market.API.Exceptions
             CancellationToken cancellationToken
         )
         {
-            logger.LogError(exception, "Unhandeled exception occoured");
-            httpContext.Response.StatusCode = exception switch
+            logger.LogError(exception, "Unhandled exception occurred: {ExceptionType}, {ErrorMessage}", exception.GetType().Name, exception.Message);
+
+            var (statusCode, title) = exception switch
             {
-                DomainException => StatusCodes.Status400BadRequest,
-                _ => StatusCodes.Status500InternalServerError,
+                DomainException => (StatusCodes.Status400BadRequest, "Bad Request"),
+                ValidationException => (StatusCodes.Status400BadRequest, "Validation Failed"),
+                UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
+                _ => (StatusCodes.Status500InternalServerError, "Internal Server Error")
             };
+
+            httpContext.Response.StatusCode = statusCode;
 
             return await problemDetailsService.TryWriteAsync(
                 new ProblemDetailsContext
@@ -30,8 +36,9 @@ namespace AE.Market.API.Exceptions
                     ProblemDetails = new ProblemDetails
                     {
                         Type = exception.GetType().FullName,
-                        Title = "An Error Occoured",
+                        Title = title,
                         Detail = exception.Message,
+                        Status = statusCode
                     },
                 }
             );

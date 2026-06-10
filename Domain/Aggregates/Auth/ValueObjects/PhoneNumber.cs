@@ -24,7 +24,7 @@ namespace AE.Market.Domain.Aggregates.Auth.ValueObjects
             return new PhoneNumber(value);
         }
         public static implicit operator PhoneNumber(string value) => Create(value);
-        public static implicit operator string(PhoneNumber obj) => obj.Value;
+        public static implicit operator string(PhoneNumber? obj) => obj?.Value ?? string.Empty;
 
     }
 }

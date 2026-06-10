@@ -8,11 +8,13 @@ namespace AE.Market.Infrastructure.Persistence.Configurations.Auth
     {
         public void Configure(EntityTypeBuilder<RefreshToken> builder)
         {
-            builder.ToTable("refresh_tokens","auth").HasKey(t => t.Id);
-            builder.HasIndex(t => t.Token);
+            builder.ToTable("refresh_tokens", "auth").HasKey(t => t.Id);
+            builder.HasIndex(t => t.TokenHash);
             builder.HasIndex(t => t.UserId);
 
-            builder.HasOne(t => t.User)
+            builder.Property(t => t.TokenHash).HasMaxLength(64).IsRequired();
+
+            builder.HasOne<User>()
                 .WithMany(u => u.RefreshTokens)
                 .HasForeignKey(t => t.UserId)
                 .OnDelete(DeleteBehavior.Restrict);

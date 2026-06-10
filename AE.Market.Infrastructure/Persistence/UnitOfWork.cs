@@ -15,11 +15,12 @@ namespace AE.Market.Infrastructure.Persistence
 
         public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
         {
+            if (db.Database.CurrentTransaction is null)
+                return;
+
             try
             {
-                await db.SaveChangesAsync(cancellationToken);
-                if (db.Database.CurrentTransaction is not null)
-                    await db.Database.CurrentTransaction.CommitAsync(cancellationToken);
+                await db.Database.CurrentTransaction.CommitAsync(cancellationToken);
             }
             catch
             {

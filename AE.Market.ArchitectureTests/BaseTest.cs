@@ -1,4 +1,4 @@
-﻿using AE.Market.Application.Common.Interfaces;
+﻿using AE.Market.Application.Common.Abstracts;
 using AE.Market.Domain.Common;
 using MediatR;
 using System.Reflection;
@@ -8,8 +8,9 @@ namespace AE.Market.ArchitectureTests
     public abstract class BaseTest
     {
         protected static readonly Assembly DomainAssembly = typeof(BaseEntity).Assembly!;
-        protected static readonly Assembly ApplicationAssembly = typeof(AE.Market.Application.DependencyInjection).Assembly!;
-        protected static readonly Assembly InfrastructureAssembly = typeof(AE.Market.Infrastructure.DependencyInjection).Assembly!;
+        protected static readonly Assembly ApplicationAssembly = typeof(Market.Application.DependencyInjection).Assembly!;
+        protected static readonly Assembly InfrastructureAssembly = typeof(Market.Infrastructure.DependencyInjection).Assembly!;
+        protected static readonly Assembly ApiAssembly = typeof(Market.API.Program).Assembly!;
 
 
         protected readonly Type BaseQueryType = typeof(IBaseQuery<>);

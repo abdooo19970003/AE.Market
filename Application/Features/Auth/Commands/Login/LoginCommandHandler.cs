@@ -1,6 +1,7 @@
 ﻿using AE.Market.Application.Common.Interfaces;
 using AE.Market.Application.Features.Auth.DTOs;
 using AE.Market.Application.Features.Auth.Specs;
+using AE.Market.Application.Services;
 using AE.Market.Domain.Aggregates.Auth;
 using AE.Market.Domain.Aggregates.Auth.Errors;
 using AE.Market.Domain.Aggregates.Auth.Events;
@@ -13,7 +14,8 @@ namespace AE.Market.Application.Features.Auth.Commands.Login
         IRepository<User> userRepo,
         IRepository<RefreshToken> tokenRepo,
         IPasswordService passwordService,
-        IJwtService jwt
+        IJwtService jwt,
+        IRefreshTokenService refreshTokenService
     ) : IRequestHandler<LoginCommand, Result<TokensResponseDto>>
     {
         async Task<Result<TokensResponseDto>> IRequestHandler<
@@ -21,21 +23,24 @@ namespace AE.Market.Application.Features.Auth.Commands.Login
             Result<TokensResponseDto>
         >.Handle(LoginCommand request, CancellationToken cancellationToken)
         {
-            var spec = new UserByEmailSpec(request.Email,includePermissions: true);
+            var spec = new UserByEmailSpec(request.Email, includePermissions: true);
             var existing = await userRepo.GetBySpecWithTrackingAsync(spec, cancellationToken);
             if (existing is null)
-                return Result<TokensResponseDto>.Fail(AuthErrors.UserNotFound);
+                return Result<TokensResponseDto>.Fail(AuthErrors.InvalidCredentials);
+            if (!existing.IsActive)
+                return Result<TokensResponseDto>.Fail(AuthErrors.UserDisabled);
             var isMatch = passwordService.VerifyPassword(request.Password, existing.PasswordHash);
             if (!isMatch)
-                return Result<TokensResponseDto>.Fail(AuthErrors.UserNotFound);
-            var refreshTokenString = jwt.GenerateRefreshToken();
-             var refresh =  existing.AddRefreshToken(refreshTokenString, TimeSpan.FromDays(10));
-           await tokenRepo.AddAsync(refresh, cancellationToken);
-            var accessToken = jwt.AuthanticateUser(existing);
-            existing.AddDomainEvent(new UserLoggedInDomainEvent(existing.Id));
-            var response = new TokensResponseDto(accessToken, refreshTokenString, existing.Id);
-            return Result<TokensResponseDto>.Success(response);
+                return Result<TokensResponseDto>.Fail(AuthErrors.InvalidCredentials);
 
+            var refreshTokenString = jwt.GenerateRefreshToken();
+            var tokenHash = refreshTokenService.HashToken(refreshTokenString);
+            var refresh = existing.AddRefreshToken(tokenHash, TimeSpan.FromDays(10));
+            await tokenRepo.AddAsync(refresh, cancellationToken);
+            var accessToken = jwt.AuthenticateUser(existing);
+            existing.AddDomainEvent(new UserLoggedInDomainEvent(existing.Id));
+            var response = new TokensResponseDto(accessToken, refreshTokenService.Encode(refresh.Id, refreshTokenString), existing.Id);
+            return Result<TokensResponseDto>.Success(response);
         }
     }
 }

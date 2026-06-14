@@ -38,11 +38,11 @@ public sealed class ProductTaxCode : BaseEntity, IAggregateRoot
         return taxCode;
     }
 
-    public string Code { get; private set; }
-    public string Type { get; private set; }
+    public string Code { get; private set; } = string.Empty;
+    public string Type { get; private set; } = string.Empty;
     public string? PerformanceLocationRequirement { get; private set; }
-    public string Name { get; private set; }
-    public string Description { get; private set; }
+    public string Name { get; private set; } = string.Empty;
+    public string Description { get; private set; } = string.Empty;
 
     public override void Delete()
     {

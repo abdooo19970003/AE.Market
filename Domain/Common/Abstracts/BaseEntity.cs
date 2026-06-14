@@ -39,14 +39,22 @@
 
         public virtual void Delete()
         {
-            IsDeleted = true;
-            UpdateLastModified();
+            if (!IsDeleted)
+            {
+                IsDeleted = true;
+                UpdateLastModified();
+                AddDomainEvent(new EntityDeletedDomainEvent(this));
+            }
         }
 
         public virtual void Restore()
         {
-            IsDeleted = false;
-            UpdateLastModified();
+            if (IsDeleted)
+            {
+                IsDeleted = false;
+                UpdateLastModified();
+                AddDomainEvent(new EntityRestoredDomainEvent(this));
+            }
         }
 
         // Override HashCode
@@ -79,4 +87,7 @@
             return !(a == b);
         }
     }
+
+    public sealed record EntityDeletedDomainEvent(BaseEntity Entity) : IDomainEvent;
+    public sealed record EntityRestoredDomainEvent(BaseEntity Entity) : IDomainEvent;
 }

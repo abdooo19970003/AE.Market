@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="AE.Market.Domain.Tests" />
+    <InternalsVisibleTo Include="AE.Market.Application" />
+    <InternalsVisibleTo Include="AE.Market.Infrastructure" />
   </ItemGroup>
 
 </Project>

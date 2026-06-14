@@ -31,6 +31,7 @@ public sealed class ProductTaxCodesController(IMediator mediator) : ControllerBa
 
     [HttpPost]
     [Authorize]
+    [HasPermission(Permission.MutateTaxCodes)]
     public async Task<IActionResult> CreateProductTaxCode([FromBody] CreateProductTaxCodeCommand cmd, CancellationToken ct)
     {
         var result = await mediator.Send(cmd, ct);
@@ -39,6 +40,7 @@ public sealed class ProductTaxCodesController(IMediator mediator) : ControllerBa
 
     [HttpPut("{id:guid}")]
     [Authorize]
+    [HasPermission(Permission.MutateTaxCodes)]
     public async Task<IActionResult> UpdateProductTaxCode(Guid id, [FromBody] UpdateProductTaxCodeCommand cmd, CancellationToken ct)
     {
         if (id != cmd.Id)
@@ -49,7 +51,7 @@ public sealed class ProductTaxCodesController(IMediator mediator) : ControllerBa
 
     [HttpDelete("{id:guid}")]
     [Authorize]
-    [HasPermission(Permission.MutateProducts)]
+    [HasPermission(Permission.MutateTaxCodes)]
     public async Task<IActionResult> DeleteProductTaxCode(Guid id, CancellationToken ct)
     {
         var result = await mediator.Send(new DeleteProductTaxCodeCommand(id), ct);

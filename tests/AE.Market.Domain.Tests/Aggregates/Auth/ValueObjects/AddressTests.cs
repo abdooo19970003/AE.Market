@@ -1,5 +1,5 @@
-using AE.Market.Domain.Aggregates.Auth.ValueObjects;
-using AE.Market.Domain.Exceptions;
+using AE.Market.Domain.Common.Enums;
+using AE.Market.Domain.Common.ValueObjects;
 using FluentAssertions;
 
 namespace AE.Market.Domain.Tests.Aggregates.Auth.ValueObjects;
@@ -9,99 +9,114 @@ public sealed class AddressTests
     [Fact]
     public void Create_WithValidValues_ReturnsAddress()
     {
-        var address = Address.Create("Egypt", "Cairo", "Street 1");
+        var address = Address.Create("Egypt", "Cairo", "12345", "Street 1", "Home", true, AddressType.Residence);
 
         address.Country.Should().Be("Egypt");
         address.City.Should().Be("Cairo");
+        address.ZipCode.Should().Be("12345");
         address.AddressLine.Should().Be("Street 1");
+        address.Label.Should().Be("Home");
+        address.IsPrimary.Should().BeTrue();
+        address.Type.Should().Be(AddressType.Residence);
     }
 
     [Fact]
-    public void Create_WithNullAddressLine_ReturnsAddress()
+    public void Create_WithDefaults_ReturnsDefaults()
     {
-        var address = Address.Create("Egypt", "Cairo", null);
+        var address = Address.Create("Egypt", "Cairo");
 
-        address.Country.Should().Be("Egypt");
-        address.City.Should().Be("Cairo");
+        address.IsPrimary.Should().BeFalse();
+        address.Type.Should().Be(AddressType.Residence);
+        address.Label.Should().BeNull();
+        address.ZipCode.Should().BeNull();
         address.AddressLine.Should().BeNull();
     }
 
     [Fact]
-    public void Create_WithEmptyCity_ThrowsDomainException()
+    public void Create_WithEmptyCity_ThrowsArgumentNullException()
     {
-        var act = () => Address.Create("Egypt", "", "Street 1");
+        var act = () => Address.Create("Egypt", "", addressLine: "Street 1");
 
         act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
-    public void Create_WithNullCountry_ThrowsDomainException()
+    public void Create_WithNullCountry_ThrowsArgumentNullException()
     {
-        var act = () => Address.Create(null!, "Cairo", "Street 1");
+        var act = () => Address.Create(null!, "Cairo", addressLine: "Street 1");
 
         act.Should().Throw<ArgumentNullException>();
     }
 
-    [Theory]
-    [InlineData("Egypt,Cairo,Street 1")]
-    [InlineData("Egypt,Cairo")]
-    [InlineData(" Egypt , Cairo , Street 1 ")]
-    public void Parse_WithValidString_ReturnsAddress(string value)
+    [Fact]
+    public void WithLabel_ReturnsWithNewLabel()
     {
-        var address = Address.Parse(value);
+        var address = Address.Create("Egypt", "Cairo");
+        var labeled = address.WithLabel("Office");
 
-        address.Should().NotBeNull();
+        labeled.Label.Should().Be("Office");
+        address.Label.Should().BeNull();
     }
 
     [Fact]
-    public void Parse_WithSingleValue_ThrowsDomainException()
+    public void MarkPrimary_ReturnsWithIsPrimaryTrue()
     {
-        var act = () => Address.Parse("Egypt");
+        var address = Address.Create("Egypt", "Cairo");
+        var primary = address.MarkPrimary();
 
-        act.Should().Throw<DomainException>().Which.Code.Should().Be("Domain.Profile.Address.ParseFailed");
+        primary.IsPrimary.Should().BeTrue();
     }
 
     [Fact]
-    public void Parse_EmptyString_ThrowsDomainException()
+    public void ClearPrimary_ReturnsWithIsPrimaryFalse()
     {
-        var act = () => Address.Parse("");
+        var address = Address.Create("Egypt", "Cairo", isPrimary: true);
+        var cleared = address.ClearPrimary();
 
-        act.Should().Throw<DomainException>()
-            .Which.Code.Should().Be("Domain.Profile.Address.ParseFailed");
+        cleared.IsPrimary.Should().BeFalse();
     }
 
     [Fact]
-    public void ImplicitConversion_FromString_ParsesAddress()
+    public void ChangeType_ReturnsNewType()
     {
-        Address? address = "Egypt,Cairo,Street 1";
+        var address = Address.Create("Egypt", "Cairo");
+        var billing = address.ChangeType(AddressType.Billing);
 
-        address.Should().NotBeNull();
-        address!.Country.Should().Be("Egypt");
+        billing.Type.Should().Be(AddressType.Billing);
+        address.Type.Should().Be(AddressType.Residence);
     }
 
     [Fact]
-    public void ImplicitConversion_FromInvalidString_ReturnsNull()
+    public void ToString_WithAllFields_ReturnsCommaSeparated()
     {
-        Address? address = "Invalid";
+        var address = Address.Create("Egypt", "Cairo", zipCode: "12345", addressLine: "Street 1");
 
-        address.Should().BeNull();
+        address.ToString().Should().Be("Egypt, Cairo, 12345, Street 1");
     }
 
     [Fact]
-    public void ImplicitConversion_ToString_ReturnsCommaSeparated()
+    public void ToString_WithoutOptionalFields_OmitsNullParts()
     {
-        var address = Address.Create("Egypt", "Cairo", "Street 1");
-        string result = address;
+        var address = Address.Create("Egypt", "Cairo");
 
-        result.Should().Be("Egypt,Cairo,Street 1");
+        address.ToString().Should().Be("Egypt, Cairo");
     }
 
     [Fact]
-    public void ToString_WithoutAddressLine_OmitsTrailingComma()
+    public void Equality_SameValues_AreEqual()
     {
-        var address = Address.Create("Egypt", "Cairo", null);
-        string result = address;
+        var a = Address.Create("Egypt", "Cairo", "12345", "Street 1", "Home", true, AddressType.Residence);
+        var b = Address.Create("Egypt", "Cairo", "12345", "Street 1", "Home", true, AddressType.Residence);
 
-        result.Should().Be("Egypt,Cairo,");
+        a.Should().Be(b);
+    }
+
+    [Fact]
+    public void Equality_DifferentValues_AreNotEqual()
+    {
+        var a = Address.Create("Egypt", "Cairo");
+        var b = Address.Create("Egypt", "Alexandria");
+
+        a.Should().NotBe(b);
     }
 }

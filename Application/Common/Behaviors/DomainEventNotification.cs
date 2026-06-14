@@ -1,4 +1,4 @@
-﻿using AE.Market.Domain.Common;
+﻿using AE.Market.Domain.Common.Abstracts;
 using MediatR;
 
 namespace AE.Market.Application.Common.Behaviors

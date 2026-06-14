@@ -2,6 +2,7 @@ using AE.Market.Domain.Aggregates.Catalog.Events;
 using AE.Market.Domain.Aggregates.Catalog.Products;
 using AE.Market.Domain.Aggregates.Catalog.Products.Variants;
 using AE.Market.Domain.Aggregates.Catalog.ValueObjects;
+using AE.Market.Domain.Exceptions;
 using FluentAssertions;
 
 namespace AE.Market.Domain.Tests.Aggregates.Catalog;
@@ -349,6 +350,285 @@ public sealed class ProductTests
             product.Delete();
 
             tag.IsDeleted.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Delete_CascadesToRelations()
+        {
+            var product = CreateValidProduct();
+            var relation = product.AddRelation(Guid.NewGuid(), Guid.NewGuid(), RelationType.Related);
+
+            product.Delete();
+
+            relation.IsDeleted.Should().BeTrue();
+        }
+    }
+
+    public sealed class ActivateGuards
+    {
+        [Fact]
+        public void Activate_ConfigurableWithNoVariants_Throws()
+        {
+            var product = Product.Create(
+                Guid.NewGuid(), "Test", "test", "SKU-001", Guid.NewGuid(), ProductType.Configurable);
+            product.Deactivate();
+
+            var act = () => product.Activate();
+
+            act.Should().Throw<DomainException>();
+            product.IsActive.Should().BeFalse();
+        }
+
+        [Fact]
+        public void Activate_ConfigurableWithVariants_Succeeds()
+        {
+            var product = Product.Create(
+                Guid.NewGuid(), "Test", "test", "SKU-001", Guid.NewGuid(), ProductType.Configurable);
+            product.AddVariant(Guid.NewGuid(), "Default", "SKU-DEF-001");
+            product.Deactivate();
+
+            product.Activate();
+
+            product.IsActive.Should().BeTrue();
+        }
+    }
+
+    public sealed class RestoreTests
+    {
+        [Fact]
+        public void Restore_SetsIsActiveTrueAndIsDeletedFalse()
+        {
+            var product = CreateValidProduct();
+            product.AddVariant(Guid.NewGuid(), "Default", "SKU-DEF-001");
+            product.Delete();
+
+            product.Restore();
+
+            product.IsActive.Should().BeTrue();
+            product.IsDeleted.Should().BeFalse();
+        }
+
+        [Fact]
+        public void Activate_AlreadyActive_DoesNotRaiseDuplicateEvent()
+        {
+            var product = CreateValidProduct();
+            product.ClearDomainEvents();
+
+            product.Activate();
+
+            product.DomainEvents.Should().BeEmpty();
+        }
+    }
+
+    public sealed class RelationTests
+    {
+        [Fact]
+        public void AddRelation_SelfRelation_Throws()
+        {
+            var product = CreateValidProduct();
+
+            var act = () => product.AddRelation(Guid.NewGuid(), product.Id, RelationType.Related);
+
+            act.Should().Throw<DomainException>();
+        }
+
+        [Fact]
+        public void AddRelation_DuplicateRelation_ReturnsExisting()
+        {
+            var product = CreateValidProduct();
+            var relatedId = Guid.NewGuid();
+            var relation = product.AddRelation(Guid.NewGuid(), relatedId, RelationType.Related);
+
+            var result = product.AddRelation(Guid.NewGuid(), relatedId, RelationType.Related);
+
+            result.Should().Be(relation);
+            product.Relations.Should().ContainSingle();
+        }
+
+        [Fact]
+        public void AddRelation_DifferentRelationType_CreatesNew()
+        {
+            var product = CreateValidProduct();
+            var relatedId = Guid.NewGuid();
+            product.AddRelation(Guid.NewGuid(), relatedId, RelationType.Related);
+
+            var result = product.AddRelation(Guid.NewGuid(), relatedId, RelationType.CrossSell);
+
+            product.Relations.Should().HaveCount(2);
+            result.Type.Should().Be(RelationType.CrossSell);
+        }
+
+        [Fact]
+        public void RemoveRelation_SoftDeletesAndRemovesFromCollection()
+        {
+            var product = CreateValidProduct();
+            var relation = product.AddRelation(Guid.NewGuid(), Guid.NewGuid(), RelationType.Related);
+
+            product.RemoveRelation(relation);
+
+            product.Relations.Should().BeEmpty();
+            relation.IsDeleted.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Delete_CascadesToRelations()
+        {
+            var product = CreateValidProduct();
+            var relation = product.AddRelation(Guid.NewGuid(), Guid.NewGuid(), RelationType.Related);
+
+            product.Delete();
+
+            relation.IsDeleted.Should().BeTrue();
+        }
+    }
+
+    public sealed class VariantProxyMethods
+    {
+        [Fact]
+        public void SetVariantQuantity_UnknownVariantId_Throws()
+        {
+            var product = CreateValidProduct();
+
+            var act = () => product.SetVariantQuantity(Guid.NewGuid(), 10);
+
+            act.Should().Throw<DomainException>();
+        }
+
+        [Fact]
+        public void AdjustVariantStock_UnknownVariantId_Throws()
+        {
+            var product = CreateValidProduct();
+
+            var act = () => product.AdjustVariantStock(Guid.NewGuid(), 10);
+
+            act.Should().Throw<DomainException>();
+        }
+
+        [Fact]
+        public void ReserveVariantStock_UnknownVariantId_Throws()
+        {
+            var product = CreateValidProduct();
+
+            var act = () => product.ReserveVariantStock(Guid.NewGuid(), 10);
+
+            act.Should().Throw<DomainException>();
+        }
+
+        [Fact]
+        public void ReleaseVariantStock_UnknownVariantId_Throws()
+        {
+            var product = CreateValidProduct();
+
+            var act = () => product.ReleaseVariantStock(Guid.NewGuid(), 10);
+
+            act.Should().Throw<DomainException>();
+        }
+
+        [Fact]
+        public void SetVariantSalePrice_UnknownVariantId_Throws()
+        {
+            var product = CreateValidProduct();
+
+            var act = () => product.SetVariantSalePrice(Guid.NewGuid(), 10m);
+
+            act.Should().Throw<DomainException>();
+        }
+
+        [Fact]
+        public void ReserveVariantStock_DoesNotRaiseDomainEvent()
+        {
+            var product = CreateValidProduct();
+            var variant = product.AddVariant(Guid.NewGuid(), "Default", "SKU-DEF-001");
+            product.SetVariantQuantity(variant.Id, 10);
+            product.ClearDomainEvents();
+
+            product.ReserveVariantStock(variant.Id, 3);
+
+            product.DomainEvents.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void ReleaseVariantStock_DoesNotRaiseDomainEvent()
+        {
+            var product = CreateValidProduct();
+            var variant = product.AddVariant(Guid.NewGuid(), "Default", "SKU-DEF-001");
+            product.SetVariantQuantity(variant.Id, 10);
+            product.ReserveVariantStock(variant.Id, 5);
+            product.ClearDomainEvents();
+
+            product.ReleaseVariantStock(variant.Id, 3);
+
+            product.DomainEvents.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void SetVariantSalePrice_RaisesVariantPriceChangedDomainEvent()
+        {
+            var product = CreateValidProduct();
+            var variant = product.AddVariant(Guid.NewGuid(), "Default", "SKU-DEF-001");
+            product.ClearDomainEvents();
+
+            product.SetVariantSalePrice(variant.Id, 99.99m);
+
+            product.DomainEvents.Should().ContainSingle()
+                .Which.Should().BeOfType<VariantPriceChangedDomainEvent>()
+                .Which.Should().BeEquivalentTo(new
+                {
+                    ProductId = product.Id,
+                    VariantId = variant.Id,
+                    OldPrice = 0m,
+                    NewPrice = 99.99m
+                });
+        }
+
+        [Fact]
+        public void SetVariantQuantity_EventCarriesCorrectData()
+        {
+            var product = CreateValidProduct();
+            var variant = product.AddVariant(Guid.NewGuid(), "Default", "SKU-DEF-001");
+            product.SetVariantQuantity(variant.Id, 10);
+            product.ClearDomainEvents();
+
+            product.SetVariantQuantity(variant.Id, 25);
+
+            var evt = product.DomainEvents.OfType<VariantStockAdjustedDomainEvent>().Single();
+            evt.ProductId.Should().Be(product.Id);
+            evt.VariantId.Should().Be(variant.Id);
+            evt.OldQuantity.Should().Be(10);
+            evt.NewQuantity.Should().Be(25);
+            evt.Delta.Should().Be(15);
+        }
+
+        [Fact]
+        public void AdjustVariantStock_EventCarriesCorrectData()
+        {
+            var product = CreateValidProduct();
+            var variant = product.AddVariant(Guid.NewGuid(), "Default", "SKU-DEF-001");
+            product.SetVariantQuantity(variant.Id, 10);
+            product.ClearDomainEvents();
+
+            product.AdjustVariantStock(variant.Id, -3);
+
+            var evt = product.DomainEvents.OfType<VariantStockAdjustedDomainEvent>().Single();
+            evt.ProductId.Should().Be(product.Id);
+            evt.VariantId.Should().Be(variant.Id);
+            evt.OldQuantity.Should().Be(10);
+            evt.NewQuantity.Should().Be(7);
+            evt.Delta.Should().Be(-3);
+        }
+
+        [Fact]
+        public void SetVariantQuantity_EventRaisedOnProductNotVariant()
+        {
+            var product = CreateValidProduct();
+            var variant = product.AddVariant(Guid.NewGuid(), "Default", "SKU-DEF-001");
+            product.ClearDomainEvents();
+
+            product.SetVariantQuantity(variant.Id, 50);
+
+            product.DomainEvents.Should().ContainSingle()
+                .Which.Should().BeOfType<VariantStockAdjustedDomainEvent>();
+            variant.DomainEvents.Should().BeEmpty();
         }
     }
 }

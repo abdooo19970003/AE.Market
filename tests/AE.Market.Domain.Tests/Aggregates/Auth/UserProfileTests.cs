@@ -1,6 +1,5 @@
 using AE.Market.Domain.Aggregates.Auth;
-using AE.Market.Domain.Aggregates.Auth.Events;
-using AE.Market.Domain.Exceptions;
+using AE.Market.Domain.Common.Enums;
 using FluentAssertions;
 
 namespace AE.Market.Domain.Tests.Aggregates.Auth;
@@ -37,21 +36,6 @@ public sealed class UserProfileTests
         }
 
         [Fact]
-        public void Create_RaisesUserProfileCreatedDomainEvent()
-        {
-            var id = Guid.NewGuid();
-            var userId = Guid.NewGuid();
-
-            var profile = UserProfile.Create(id, userId, "John", "Doe");
-
-            profile.DomainEvents.Should().ContainSingle(e =>
-                e.GetType() == typeof(UserProfileCreatedDomainEvent)
-                && ((UserProfileCreatedDomainEvent)e).Id == id
-                && ((UserProfileCreatedDomainEvent)e).UserId == userId
-            );
-        }
-
-        [Fact]
         public void FullName_WithFirstAndLastName_ReturnsCombined()
         {
             var profile = UserProfile.Create(Guid.NewGuid(), Guid.NewGuid(), "John", "Doe");
@@ -79,20 +63,6 @@ public sealed class UserProfileTests
 
             profile.FirstName!.Value.Should().Be("Jane");
             profile.LastName!.Value.Should().Be("Smith");
-        }
-
-
-        [Fact]
-        public void SetNames_RaisesUserProfileUpdatedDomainEvent()
-        {
-            var profile = CreateProfile();
-
-            profile.SetNames("Jane", "Smith");
-
-            profile.DomainEvents.Should().Contain(e =>
-                e.GetType() == typeof(UserProfileUpdatedDomainEvent)
-                && ((UserProfileUpdatedDomainEvent)e).UserId == profile.UserId
-            );
         }
 
         [Fact]
@@ -128,57 +98,84 @@ public sealed class UserProfileTests
 
             profile.Phone.Should().BeNull();
         }
-
-        [Fact]
-        public void SetPhoneNumber_RaisesUserProfileUpdatedDomainEvent()
-        {
-            var profile = CreateProfile();
-
-            profile.SetPhoneNumber("05554443322");
-
-            profile.DomainEvents.Should().Contain(e =>
-                e.GetType() == typeof(UserProfileUpdatedDomainEvent)
-                && ((UserProfileUpdatedDomainEvent)e).UserId == profile.UserId
-            );
-        }
     }
 
     public sealed class Address
     {
         [Fact]
-        public void SetAddress_SetsAddress()
+        public void AddAddress_AddsToCollection()
         {
             var profile = CreateProfile();
 
-            profile.SetAddress("Cairo", "Egypt", "Street 1");
+            profile.AddAddress("Egypt", "Cairo", "Street 1", "Home", true, AddressType.Residence);
 
-            profile.Address.Should().NotBeNull();
-            profile.Address!.City.Should().Be("Cairo");
-            profile.Address.Country.Should().Be("Egypt");
+            profile.Addresses.Should().ContainSingle();
+            profile.Addresses.First().City.Should().Be("Cairo");
+            profile.Addresses.First().Country.Should().Be("Egypt");
+            profile.Addresses.First().Label.Should().Be("Home");
+            profile.Addresses.First().IsPrimary.Should().BeTrue();
+            profile.Addresses.First().Type.Should().Be(AddressType.Residence);
         }
 
         [Fact]
-        public void RemoveAddress_ClearsAddress()
+        public void AddAddress_MultipleAddresses_AreAdded()
         {
             var profile = CreateProfile();
-            profile.SetAddress("Cairo", "Egypt", "Street 1");
 
-            profile.RemoveAddress();
+            profile.AddAddress("Egypt", "Cairo", null, "Home", true, AddressType.Residence);
+            profile.AddAddress("Egypt", "Alexandria", null, "Office", false, AddressType.Business);
 
-            profile.Address.Should().BeNull();
+            profile.Addresses.Should().HaveCount(2);
         }
 
         [Fact]
-        public void SetAddress_RaisesUserProfileUpdatedDomainEvent()
+        public void AddAddress_WithPrimary_ClearsPreviousPrimary()
         {
             var profile = CreateProfile();
+            profile.AddAddress("Egypt", "Cairo", null, "Home", true, AddressType.Residence);
 
-            profile.SetAddress("Cairo", "Egypt", "Street 1");
+            profile.AddAddress("Egypt", "Alexandria", null, "Office", true, AddressType.Business);
 
-            profile.DomainEvents.Should().Contain(e =>
-                e.GetType() == typeof(UserProfileUpdatedDomainEvent)
-                && ((UserProfileUpdatedDomainEvent)e).UserId == profile.UserId
-            );
+            profile.Addresses.Count(a => a.IsPrimary).Should().Be(1);
+            profile.Addresses.First(a => a.City == "Alexandria").IsPrimary.Should().BeTrue();
+        }
+
+        [Fact]
+        public void RemoveAddress_RemovesMatchingAddress()
+        {
+            var profile = CreateProfile();
+            profile.AddAddress("Egypt", "Cairo", null, "Home", true, AddressType.Residence);
+            profile.AddAddress("Egypt", "Alexandria", null, "Office", false, AddressType.Business);
+
+            var removed = profile.RemoveAddress("Egypt", "Alexandria", AddressType.Business);
+
+            removed.Should().BeTrue();
+            profile.Addresses.Should().ContainSingle();
+            profile.Addresses.First().City.Should().Be("Cairo");
+        }
+
+        [Fact]
+        public void RemoveAddress_NonExistent_ReturnsFalse()
+        {
+            var profile = CreateProfile();
+            profile.AddAddress("Egypt", "Cairo", null, "Home", true, AddressType.Residence);
+
+            var removed = profile.RemoveAddress("Egypt", "Giza", AddressType.Residence);
+
+            removed.Should().BeFalse();
+            profile.Addresses.Should().ContainSingle();
+        }
+
+        [Fact]
+        public void ClearAddresses_EmptiesCollection()
+        {
+            var profile = CreateProfile();
+            profile.AddAddress("Egypt", "Cairo", null, "Home", true, AddressType.Residence);
+            profile.AddAddress("Egypt", "Alexandria", null, "Office", false, AddressType.Business);
+
+            profile.ClearAddresses();
+
+            profile.Addresses.Should().BeEmpty();
         }
     }
 
@@ -203,19 +200,6 @@ public sealed class UserProfileTests
             profile.RemoveProfileImage();
 
             profile.ProfileImage.Should().BeNull();
-        }
-
-        [Fact]
-        public void SetProfileImage_RaisesUserProfileUpdatedDomainEvent()
-        {
-            var profile = CreateProfile();
-
-            profile.SetProfileImage("https://example.com/image.jpg");
-
-            profile.DomainEvents.Should().Contain(e =>
-                e.GetType() == typeof(UserProfileUpdatedDomainEvent)
-                && ((UserProfileUpdatedDomainEvent)e).UserId == profile.UserId
-            );
         }
     }
 }

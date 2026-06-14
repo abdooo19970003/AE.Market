@@ -9,4 +9,6 @@ public sealed record VariantDto
     public bool IsActive { get; set; }
     public decimal SalePrice { get; set; }
     public int StockQuantity { get; set; }
+    public int ReservedQuantity { get; set; }
+    public int AvailableQuantity { get; set; }
 }

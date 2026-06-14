@@ -25,11 +25,16 @@
 ### 4. No `ProductSearchedDomainEvent`
 No event on search query. Cannot track zero-result searches or popular queries.
 
-### 5. No wishlist/favorites
+### 5. No wishlist/favorites  
 No `WishlistItem` entity, command, or query for bookmarking products.
+> **TODO:** The plan to create `Engagment Aggregate` the holds entities like `WishListItem`, `FavoritList` and `FavoriteListItem`... 
 
-### 6. No product reviews/ratings
+
+### 6. No product reviews/ratings [Keep it for Social Aggregate]
 No `Review` aggregate — no social proof mechanism.
+> **TODO:** The plan the create `Social Aggregate` to manage Reviews and Rating (`ProductId`, `CustomerId`, `Rating`, `Title`, `Body` ....)
+> In `Prouct` we add two lightweight readonly fields (`AverageRating`, `TotalReviewsCount`) 
+>Whenever a customer drop a review `Social Sggregate` recalculate the average and the count and  rise domain event `ProductReviewSummaryUpdatedEvent` so `Catalog Aggregate` listen to this event and update its fields 
 
 ---
 

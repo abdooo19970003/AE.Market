@@ -31,6 +31,7 @@ public sealed class BrandsController(IMediator mediator) : ControllerBase
 
     [HttpPost]
     [Authorize]
+    [HasPermission(Permission.MutateBrands)]
     public async Task<IActionResult> CreateBrand([FromBody] CreateBrandCommand cmd, CancellationToken ct)
     {
         var result = await mediator.Send(cmd, ct);
@@ -39,6 +40,7 @@ public sealed class BrandsController(IMediator mediator) : ControllerBase
 
     [HttpPut("{id:guid}")]
     [Authorize]
+    [HasPermission(Permission.MutateBrands)]
     public async Task<IActionResult> UpdateBrand(Guid id, [FromBody] UpdateBrandCommand cmd, CancellationToken ct)
     {
         if (id != cmd.Id)
@@ -49,7 +51,7 @@ public sealed class BrandsController(IMediator mediator) : ControllerBase
 
     [HttpDelete("{id:guid}")]
     [Authorize]
-    [HasPermission(Permission.MutateProducts)]
+    [HasPermission(Permission.MutateBrands)]
     public async Task<IActionResult> DeleteBrand(Guid id, CancellationToken ct)
     {
         var result = await mediator.Send(new DeleteBrandCommand(id), ct);

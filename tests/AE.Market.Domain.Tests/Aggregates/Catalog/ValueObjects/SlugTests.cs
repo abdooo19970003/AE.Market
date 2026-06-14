@@ -101,4 +101,21 @@ public sealed class SlugTests
 
         result.Should().Be("hello-world");
     }
+
+    [Fact]
+    public void CreateNullable_WithNull_ReturnsNull()
+    {
+        var slug = Slug.CreateNullable(null);
+
+        slug.Should().BeNull();
+    }
+
+    [Fact]
+    public void CreateNullable_WithValidSlug_ReturnsSlug()
+    {
+        var slug = Slug.CreateNullable("hello-world");
+
+        slug.Should().NotBeNull();
+        slug!.Value.Should().Be("hello-world");
+    }
 }

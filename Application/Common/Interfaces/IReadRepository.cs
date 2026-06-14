@@ -1,4 +1,4 @@
-﻿using AE.Market.Domain.Common;
+﻿using AE.Market.Domain.Common.Abstracts;
 using AE.Market.Domain.Common.Specifications;
 
 namespace AE.Market.Application.Common.Interfaces

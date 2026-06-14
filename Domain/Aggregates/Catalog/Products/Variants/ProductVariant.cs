@@ -1,6 +1,5 @@
 using AE.Market.Domain.Aggregates.Catalog.Attributes;
 using AE.Market.Domain.Aggregates.Catalog.Errors;
-using AE.Market.Domain.Aggregates.Catalog.Events;
 using AE.Market.Domain.Aggregates.Catalog.ValueObjects;
 using AE.Market.Domain.Common.Abstracts;
 using AE.Market.Domain.Exceptions;
@@ -19,6 +18,7 @@ public sealed class ProductVariant : BaseEntity, IMetaData
     public int StockQuantity { get; private set; }
     public int ReservedQuantity { get; private set; }
     public int AvailableQuantity => StockQuantity - ReservedQuantity;
+    public byte[] RowVersion { get; private set; } = [];
 
     private readonly List<VariantAttributeValue> _attributeValues = [];
     public IReadOnlyCollection<VariantAttributeValue> AttributeValues => _attributeValues.AsReadOnly();
@@ -116,9 +116,7 @@ public sealed class ProductVariant : BaseEntity, IMetaData
 
     internal void SetOrUpdateSellingPrice(decimal price)
     {
-        var oldPrice = SalePrice;
         SalePrice = price;
-        AddDomainEvent(new VariantPriceChangedDomainEvent(ProductId, Id, oldPrice, price));
         UpdateLastModified();
     }
 
@@ -130,18 +128,17 @@ public sealed class ProductVariant : BaseEntity, IMetaData
 
     internal void SetQuantity(int quantity)
     {
-        var oldQuantity = StockQuantity;
-        StockQuantity = quantity;
-        AddDomainEvent(new VariantStockAdjustedDomainEvent(ProductId, Id, oldQuantity, quantity, quantity - oldQuantity));
-        UpdateLastModified();
+        if (quantity < ReservedQuantity)
+            throw new DomainException(CatalogErrors.InsufficientStock.Code, CatalogErrors.InsufficientStock.Message);
+        ApplyStockChange(quantity);
     }
 
     internal void AdjustStock(int delta)
     {
-        var oldQuantity = StockQuantity;
-        StockQuantity += delta;
-        AddDomainEvent(new VariantStockAdjustedDomainEvent(ProductId, Id, oldQuantity, StockQuantity, delta));
-        UpdateLastModified();
+        var newQuantity = StockQuantity + delta;
+        if (newQuantity < 0)
+            throw new DomainException(CatalogErrors.InsufficientStock.Code, CatalogErrors.InsufficientStock.Message);
+        ApplyStockChange(newQuantity);
     }
 
     internal void ReserveStock(int quantity)
@@ -155,6 +152,12 @@ public sealed class ProductVariant : BaseEntity, IMetaData
     internal void ReleaseStock(int quantity)
     {
         ReservedQuantity = Math.Max(0, ReservedQuantity - quantity);
+        UpdateLastModified();
+    }
+
+    private void ApplyStockChange(int newQuantity)
+    {
+        StockQuantity = newQuantity;
         UpdateLastModified();
     }
 

@@ -1,6 +1,9 @@
 ﻿using AE.Market.Domain.Aggregates.Auth.Events;
 using AE.Market.Domain.Aggregates.Auth.ValueObjects;
 using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
+using AE.Market.Domain.Common.Enums;
+using AE.Market.Domain.Common.ValueObjects;
 
 namespace AE.Market.Domain.Aggregates.Auth
 {
@@ -138,6 +141,7 @@ namespace AE.Market.Domain.Aggregates.Auth
                 throw new InvalidOperationException("Profile already exists.");
 
             Profile = UserProfile.Create(profileId, this.Id, firstName, lastName);
+            AddDomainEvent(new UserProfileCreatedDomainEvent(profileId, this.Id));
             UpdateLastModified();
         }
 
@@ -145,6 +149,7 @@ namespace AE.Market.Domain.Aggregates.Auth
         {
             GuardAgainstMissingProfile();
             Profile!.SetNames(firstName, lastName);
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
             UpdateLastModified();
         }
 
@@ -155,20 +160,39 @@ namespace AE.Market.Domain.Aggregates.Auth
                 Profile!.RemovePhoneNumber();
             else
                 Profile!.SetPhoneNumber(phoneNumber);
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
             UpdateLastModified();
         }
 
-        public void UpdateProfileAddress(string city, string country, string? addressLine)
+        public void AddProfileAddress(
+            string country,
+            string city,
+            string? addressLine,
+            string? label,
+            bool isPrimary,
+            AddressType type)
         {
             GuardAgainstMissingProfile();
-            Profile!.SetAddress(city, country, addressLine);
+            Profile!.AddAddress(country, city, addressLine, label, isPrimary, type);
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
             UpdateLastModified();
         }
 
-        public void RemoveProfileAddress()
+        public bool RemoveProfileAddress(string country, string city, AddressType type)
         {
             GuardAgainstMissingProfile();
-            Profile!.RemoveAddress();
+            var removed = Profile!.RemoveAddress(country, city, type);
+            if (removed)
+                AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
+            UpdateLastModified();
+            return removed;
+        }
+
+        public void ClearProfileAddresses()
+        {
+            GuardAgainstMissingProfile();
+            Profile!.ClearAddresses();
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
             UpdateLastModified();
         }
 
@@ -179,6 +203,7 @@ namespace AE.Market.Domain.Aggregates.Auth
                 Profile!.RemoveProfileImage();
             else
                 Profile!.SetProfileImage(url);
+            AddDomainEvent(new UserProfileUpdatedDomainEvent(Id));
             UpdateLastModified();
         }
 

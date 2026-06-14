@@ -1,6 +1,8 @@
 using AE.Market.Domain.Aggregates.Catalog.Attributes;
+using AE.Market.Domain.Aggregates.Catalog.Events;
 using AE.Market.Domain.Aggregates.Catalog.Products;
 using AE.Market.Domain.Aggregates.Catalog.Products.Variants;
+using AE.Market.Domain.Exceptions;
 using FluentAssertions;
 
 namespace AE.Market.Domain.Tests.Aggregates.Catalog;
@@ -130,6 +132,255 @@ public sealed class ProductVariantTests
             variant.Delete();
 
             attrVal.IsDeleted.Should().BeTrue();
+        }
+    }
+
+    public sealed class SetQuantity
+    {
+        [Fact]
+        public void SetQuantity_UpdatesStockAndFiresEvent()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.ClearDomainEvents();
+
+            product.SetVariantQuantity(variant.Id, 50);
+
+            variant.StockQuantity.Should().Be(50);
+            variant.AvailableQuantity.Should().Be(50);
+            product.DomainEvents.Should().ContainSingle()
+                .Which.Should().BeOfType<VariantStockAdjustedDomainEvent>();
+        }
+
+        [Fact]
+        public void SetQuantity_BelowReservedQuantity_Throws()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 10);
+            product.ReserveVariantStock(variant.Id, 5);
+            product.ClearDomainEvents();
+
+            var act = () => product.SetVariantQuantity(variant.Id, 3);
+
+            act.Should().Throw<DomainException>();
+            variant.StockQuantity.Should().Be(10);
+        }
+
+        [Fact]
+        public void SetQuantity_ExactlyReservedQuantity_Succeeds()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 10);
+            product.ReserveVariantStock(variant.Id, 5);
+
+            product.SetVariantQuantity(variant.Id, 5);
+
+            variant.StockQuantity.Should().Be(5);
+            variant.AvailableQuantity.Should().Be(0);
+        }
+    }
+
+    public sealed class AdjustStock
+    {
+        [Fact]
+        public void AdjustStock_PositiveDelta_IncreasesStock()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 10);
+
+            product.AdjustVariantStock(variant.Id, 5);
+
+            variant.StockQuantity.Should().Be(15);
+            variant.AvailableQuantity.Should().Be(15);
+        }
+
+        [Fact]
+        public void AdjustStock_NegativeDelta_DecreasesStock()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 10);
+
+            product.AdjustVariantStock(variant.Id, -3);
+
+            variant.StockQuantity.Should().Be(7);
+            variant.AvailableQuantity.Should().Be(7);
+        }
+
+        [Fact]
+        public void AdjustStock_NegativeResult_Throws()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 5);
+
+            var act = () => product.AdjustVariantStock(variant.Id, -10);
+
+            act.Should().Throw<DomainException>();
+            variant.StockQuantity.Should().Be(5);
+        }
+
+        [Fact]
+        public void AdjustStock_FiresEvent()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 10);
+            product.ClearDomainEvents();
+
+            product.AdjustVariantStock(variant.Id, -2);
+
+            var evt = product.DomainEvents.OfType<VariantStockAdjustedDomainEvent>().Single();
+            evt.Delta.Should().Be(-2);
+            evt.OldQuantity.Should().Be(10);
+            evt.NewQuantity.Should().Be(8);
+        }
+    }
+
+    public sealed class ReserveStock
+    {
+        [Fact]
+        public void ReserveStock_IncreasesReservedQuantity()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 10);
+
+            product.ReserveVariantStock(variant.Id, 3);
+
+            variant.ReservedQuantity.Should().Be(3);
+            variant.AvailableQuantity.Should().Be(7);
+        }
+
+        [Fact]
+        public void ReserveStock_ExceedsAvailable_Throws()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 10);
+
+            var act = () => product.ReserveVariantStock(variant.Id, 15);
+
+            act.Should().Throw<DomainException>();
+            variant.ReservedQuantity.Should().Be(0);
+        }
+
+        [Fact]
+        public void ReserveStock_ExactlyAvailable_Succeeds()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 10);
+
+            product.ReserveVariantStock(variant.Id, 10);
+
+            variant.ReservedQuantity.Should().Be(10);
+            variant.AvailableQuantity.Should().Be(0);
+        }
+
+        [Fact]
+        public void ReserveStock_MultipleReservations_Accumulate()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 10);
+
+            product.ReserveVariantStock(variant.Id, 3);
+            product.ReserveVariantStock(variant.Id, 4);
+
+            variant.ReservedQuantity.Should().Be(7);
+            variant.AvailableQuantity.Should().Be(3);
+        }
+
+        [Fact]
+        public void ReserveStock_AfterSecondReservationExceeds_Throws()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 10);
+            product.ReserveVariantStock(variant.Id, 8);
+
+            var act = () => product.ReserveVariantStock(variant.Id, 5);
+
+            act.Should().Throw<DomainException>();
+            variant.ReservedQuantity.Should().Be(8);
+        }
+    }
+
+    public sealed class ReleaseStock
+    {
+        [Fact]
+        public void ReleaseStock_DecreasesReservedQuantity()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 10);
+            product.ReserveVariantStock(variant.Id, 5);
+
+            product.ReleaseVariantStock(variant.Id, 3);
+
+            variant.ReservedQuantity.Should().Be(2);
+            variant.AvailableQuantity.Should().Be(8);
+        }
+
+        [Fact]
+        public void ReleaseStock_MoreThanReserved_ClampsToZero()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 10);
+            product.ReserveVariantStock(variant.Id, 3);
+
+            product.ReleaseVariantStock(variant.Id, 10);
+
+            variant.ReservedQuantity.Should().Be(0);
+            variant.AvailableQuantity.Should().Be(10);
+        }
+
+        [Fact]
+        public void ReleaseStock_AllReserved_AvailableRestored()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 10);
+            product.ReserveVariantStock(variant.Id, 10);
+
+            product.ReleaseVariantStock(variant.Id, 10);
+
+            variant.ReservedQuantity.Should().Be(0);
+            variant.AvailableQuantity.Should().Be(10);
+        }
+    }
+
+    public sealed class EventEnforcement
+    {
+        [Fact]
+        public void SetQuantity_ViaProduct_DoesNotRaiseEventOnVariant()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 50);
+            product.ClearDomainEvents();
+
+            product.SetVariantQuantity(variant.Id, 100);
+
+            variant.DomainEvents.Should().BeEmpty();
+            product.DomainEvents.Should().ContainSingle()
+                .Which.Should().BeOfType<VariantStockAdjustedDomainEvent>();
+        }
+
+        [Fact]
+        public void AdjustStock_ViaProduct_DoesNotRaiseEventOnVariant()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.SetVariantQuantity(variant.Id, 10);
+            product.ClearDomainEvents();
+
+            product.AdjustVariantStock(variant.Id, -3);
+
+            variant.DomainEvents.Should().BeEmpty();
+            product.DomainEvents.Should().ContainSingle()
+                .Which.Should().BeOfType<VariantStockAdjustedDomainEvent>();
+        }
+
+        [Fact]
+        public void SetOrUpdateSellingPrice_ViaProduct_DoesNotRaiseEventOnVariant()
+        {
+            var product = CreateProductWithVariant(out var variant);
+            product.ClearDomainEvents();
+
+            product.SetVariantSalePrice(variant.Id, 299.99m);
+
+            variant.DomainEvents.Should().BeEmpty();
+            product.DomainEvents.Should().ContainSingle()
+                .Which.Should().BeOfType<VariantPriceChangedDomainEvent>();
         }
     }
 }

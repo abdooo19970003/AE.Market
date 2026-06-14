@@ -71,4 +71,36 @@ public sealed class URLTests
 
         act.Should().Throw<ArgumentException>();
     }
+
+    [Fact]
+    public void CreateAbsolute_WithValidHttpsUrl_ReturnsUrl()
+    {
+        var url = URL.CreateAbsolute("https://example.com/path");
+
+        url.Value.Should().Be("https://example.com/path");
+    }
+
+    [Fact]
+    public void CreateAbsolute_WithHttpUrl_ReturnsUrl()
+    {
+        var url = URL.CreateAbsolute("http://example.com/path");
+
+        url.Value.Should().Be("http://example.com/path");
+    }
+
+    [Fact]
+    public void CreateAbsolute_WithFtpScheme_Throws()
+    {
+        var act = () => URL.CreateAbsolute("ftp://example.com/file");
+
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void CreateAbsolute_WithMalformedUrl_Throws()
+    {
+        var act = () => URL.CreateAbsolute("not-a-url");
+
+        act.Should().Throw<ArgumentException>();
+    }
 }

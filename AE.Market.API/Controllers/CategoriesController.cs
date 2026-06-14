@@ -31,6 +31,7 @@ public sealed class CategoriesController(IMediator mediator) : ControllerBase
 
     [HttpPost]
     [Authorize]
+    [HasPermission(Permission.MutateCategories)]
     public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryCommand cmd, CancellationToken ct)
     {
         var result = await mediator.Send(cmd, ct);
@@ -39,6 +40,7 @@ public sealed class CategoriesController(IMediator mediator) : ControllerBase
 
     [HttpPut("{id:guid}")]
     [Authorize]
+    [HasPermission(Permission.MutateCategories)]
     public async Task<IActionResult> UpdateCategory(Guid id, [FromBody] UpdateCategoryCommand cmd, CancellationToken ct)
     {
         if (id != cmd.Id)
@@ -49,7 +51,7 @@ public sealed class CategoriesController(IMediator mediator) : ControllerBase
 
     [HttpDelete("{id:guid}")]
     [Authorize]
-    [HasPermission(Permission.MutateProducts)]
+    [HasPermission(Permission.MutateCategories)]
     public async Task<IActionResult> DeleteCategory(Guid id, CancellationToken ct)
     {
         var result = await mediator.Send(new DeleteCategoryCommand(id), ct);

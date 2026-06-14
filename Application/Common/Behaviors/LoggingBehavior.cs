@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics;
-using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using MediatR;
 using Microsoft.Extensions.Logging;
 

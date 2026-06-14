@@ -284,6 +284,63 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
         UpdateLastModified();
     }
 
+    public void SetVariantQuantity(Guid variantId, int quantity)
+    {
+        var variant = _variants.FirstOrDefault(v => v.Id == variantId);
+        if (variant is null)
+            throw new DomainException(CatalogErrors.VariantNotFound.Code, CatalogErrors.VariantNotFound.Message);
+
+        var oldQuantity = variant.StockQuantity;
+        variant.SetQuantity(quantity);
+        AddDomainEvent(new VariantStockAdjustedDomainEvent(Id, variantId, oldQuantity, quantity, quantity - oldQuantity));
+        UpdateLastModified();
+    }
+
+    public void AdjustVariantStock(Guid variantId, int delta)
+    {
+        var variant = _variants.FirstOrDefault(v => v.Id == variantId);
+        if (variant is null)
+            throw new DomainException(CatalogErrors.VariantNotFound.Code, CatalogErrors.VariantNotFound.Message);
+
+        var oldQuantity = variant.StockQuantity;
+        variant.AdjustStock(delta);
+        var newQuantity = variant.StockQuantity;
+        AddDomainEvent(new VariantStockAdjustedDomainEvent(Id, variantId, oldQuantity, newQuantity, delta));
+        UpdateLastModified();
+    }
+
+    public void ReserveVariantStock(Guid variantId, int quantity)
+    {
+        var variant = _variants.FirstOrDefault(v => v.Id == variantId);
+        if (variant is null)
+            throw new DomainException(CatalogErrors.VariantNotFound.Code, CatalogErrors.VariantNotFound.Message);
+
+        variant.ReserveStock(quantity);
+        UpdateLastModified();
+    }
+
+    public void ReleaseVariantStock(Guid variantId, int quantity)
+    {
+        var variant = _variants.FirstOrDefault(v => v.Id == variantId);
+        if (variant is null)
+            throw new DomainException(CatalogErrors.VariantNotFound.Code, CatalogErrors.VariantNotFound.Message);
+
+        variant.ReleaseStock(quantity);
+        UpdateLastModified();
+    }
+
+    public void SetVariantSalePrice(Guid variantId, decimal price)
+    {
+        var variant = _variants.FirstOrDefault(v => v.Id == variantId);
+        if (variant is null)
+            throw new DomainException(CatalogErrors.VariantNotFound.Code, CatalogErrors.VariantNotFound.Message);
+
+        var oldPrice = variant.SalePrice;
+        variant.SetOrUpdateSellingPrice(price);
+        AddDomainEvent(new VariantPriceChangedDomainEvent(Id, variantId, oldPrice, price));
+        UpdateLastModified();
+    }
+
     internal ProductAttributeValue SetAttributeValue(
         Guid valueId,
         Guid attributeId,

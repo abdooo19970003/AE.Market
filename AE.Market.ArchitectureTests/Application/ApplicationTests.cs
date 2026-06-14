@@ -1,6 +1,6 @@
 ﻿using AE.Market.Application.Common.Interfaces;
 using AE.Market.ArchitectureTests.CustomRules;
-using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using FluentAssertions;
 using MediatR;
 using NetArchTest.Rules;

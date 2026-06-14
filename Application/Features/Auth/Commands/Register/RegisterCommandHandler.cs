@@ -5,7 +5,7 @@ using AE.Market.Application.Services;
 using AE.Market.Domain.Aggregates.Auth;
 using AE.Market.Domain.Aggregates.Auth.Errors;
 using AE.Market.Domain.Aggregates.Auth.ValueObjects;
-using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using AE.Market.Domain.Common.DomainErrors;
 using AE.Market.Domain.Common.Specifications;
 using MediatR;

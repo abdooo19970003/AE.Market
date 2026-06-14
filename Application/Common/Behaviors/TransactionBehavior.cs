@@ -1,6 +1,6 @@
 ﻿using AE.Market.Application.Common.Abstracts;
 using AE.Market.Application.Common.Interfaces;
-using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using AE.Market.Domain.Exceptions;
 using MediatR;
 using System.Data;

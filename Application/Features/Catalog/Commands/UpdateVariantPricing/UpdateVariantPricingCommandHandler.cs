@@ -23,7 +23,7 @@ internal sealed class UpdateVariantPricingCommandHandler(
         if (variant is null)
             return Result<VariantDto>.Fail(CatalogErrors.VariantNotFound);
 
-        variant.SetOrUpdateSellingPrice(request.SalePrice);
+        product.SetVariantSalePrice(request.VariantId, request.SalePrice);
         repo.Update(product);
 
         var dto = mapper.Map<VariantDto>(variant);

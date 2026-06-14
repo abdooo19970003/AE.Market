@@ -251,7 +251,7 @@ public sealed class UserTests
 
             user.CreateProfile(profileId, "John", "Doe");
 
-            var domainEvent = user.Profile!.DomainEvents.Should().ContainSingle(e =>
+            var domainEvent = user.DomainEvents.Should().ContainSingle(e =>
                 e.GetType() == typeof(UserProfileCreatedDomainEvent)
             ).Which;
             var created = (UserProfileCreatedDomainEvent)domainEvent;
@@ -279,7 +279,7 @@ public sealed class UserTests
 
             user.UpdateProfileNames("Jane", "Smith");
 
-            user.Profile!.DomainEvents.Should().Contain(e =>
+            user.DomainEvents.Should().Contain(e =>
                 e.GetType() == typeof(UserProfileUpdatedDomainEvent)
                 && ((UserProfileUpdatedDomainEvent)e).UserId == user.Id
             );

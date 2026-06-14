@@ -1,5 +1,5 @@
 ﻿using AE.Market.Application.Common.Abstracts;
-using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using MediatR;
 using System.Reflection;
 

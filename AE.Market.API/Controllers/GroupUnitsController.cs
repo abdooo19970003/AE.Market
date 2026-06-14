@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AE.Market.API.Controllers;
 
-[Route("api/group-units")]
+[Route("api/[controller]")]
 [ApiController]
 public sealed class GroupUnitsController(IMediator mediator) : ControllerBase
 {
@@ -32,6 +32,7 @@ public sealed class GroupUnitsController(IMediator mediator) : ControllerBase
 
     [HttpPost]
     [Authorize]
+    [HasPermission(Permission.MutateUnits)]
     public async Task<IActionResult> CreateGroupUnit([FromBody] CreateGroupUnitCommand cmd, CancellationToken ct)
     {
         var result = await mediator.Send(cmd, ct);
@@ -40,6 +41,7 @@ public sealed class GroupUnitsController(IMediator mediator) : ControllerBase
 
     [HttpPut("{id:guid}")]
     [Authorize]
+    [HasPermission(Permission.MutateUnits)]
     public async Task<IActionResult> UpdateGroupUnit(Guid id, [FromBody] UpdateGroupUnitCommand cmd, CancellationToken ct)
     {
         if (id != cmd.Id)
@@ -50,6 +52,7 @@ public sealed class GroupUnitsController(IMediator mediator) : ControllerBase
 
     [HttpPost("{id:guid}/units")]
     [Authorize]
+    [HasPermission(Permission.MutateUnits)]
     public async Task<IActionResult> AddUnit(Guid id, [FromBody] AddUnitToGroupCommand cmd, CancellationToken ct)
     {
         if (id != cmd.GroupUnitId)
@@ -60,7 +63,7 @@ public sealed class GroupUnitsController(IMediator mediator) : ControllerBase
 
     [HttpDelete("{id:guid}")]
     [Authorize]
-    [HasPermission(Permission.MutateProducts)]
+    [HasPermission(Permission.MutateUnits)]
     public async Task<IActionResult> DeleteGroupUnit(Guid id, CancellationToken ct)
     {
         var result = await mediator.Send(new DeleteGroupUnitCommand(id), ct);

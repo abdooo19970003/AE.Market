@@ -1,28 +1,25 @@
 using AE.Market.Application.Services;
 using AE.Market.Domain.Aggregates.Auth;
-using Microsoft.EntityFrameworkCore;
 
-namespace AE.Market.Infrastructure.Persistence;
+namespace AE.Market.Infrastructure.Persistence.Seeders;
 
-public sealed class DbSeeder(AppDbContext db, IPasswordService passwordService)
+public static class UserSeeder
 {
-    public async Task SeedAsync()
+    public static List<User> GetSeedData(IPasswordService passwordService)
     {
-        if (await db.Users.AnyAsync())
-            return;
-
-        // Admin user — has all permissions
         var adminPassword = passwordService.HashPassword("Admin@12345");
         var admin = User.Register(Guid.NewGuid(), "admin@aemarket.com", adminPassword);
         admin.AddPermission(Permission.AccessUsers);
         admin.AddPermission(Permission.MutateUsers);
-        db.Users.Add(admin);
+        admin.AddPermission(Permission.MutateCategories);
+        admin.AddPermission(Permission.MutateProducts);
+        admin.AddPermission(Permission.MutateUnits);
+        admin.AddPermission(Permission.MutateTaxCodes);
+        admin.AddPermission(Permission.MutateBrands);
 
-        // Client user — no special permissions
         var clientPassword = passwordService.HashPassword("Client@12345");
         var client = User.Register(Guid.NewGuid(), "client@aemarket.com", clientPassword);
-        db.Users.Add(client);
 
-        await db.SaveChangesAsync();
+        return [admin, client];
     }
 }

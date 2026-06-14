@@ -23,7 +23,7 @@ internal sealed class UpdateVariantStockCommandHandler(
         if (variant is null)
             return Result<VariantDto>.Fail(CatalogErrors.VariantNotFound);
 
-        variant.SetQuantity(request.StockQuantity);
+        product.SetVariantQuantity(request.VariantId, request.StockQuantity);
         repo.Update(product);
 
         var dto = mapper.Map<VariantDto>(variant);

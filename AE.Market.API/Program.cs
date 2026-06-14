@@ -5,6 +5,7 @@ using AE.Market.Application;
 using AE.Market.Application.Common.Interfaces;
 using AE.Market.Infrastructure;
 using AE.Market.Infrastructure.Persistence;
+using AE.Market.Infrastructure.Persistence.Seeders;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;

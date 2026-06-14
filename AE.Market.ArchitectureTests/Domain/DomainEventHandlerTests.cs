@@ -1,5 +1,5 @@
 ﻿using AE.Market.Application.Common.Behaviors;
-using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using FluentAssertions;
 using MediatR;
 using NetArchTest.Rules;

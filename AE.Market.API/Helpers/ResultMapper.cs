@@ -1,4 +1,4 @@
-using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AE.Market.API.Helpers
@@ -34,6 +34,13 @@ namespace AE.Market.API.Helpers
             if (result.IsSuccess)
                 return new OkObjectResult(result.Value);
 
+            return CreateProblemResult(result.Error, result.Errors);
+        }
+
+        public static IActionResult ToDeletedActionResult(this Result result)
+        {
+            if (result.IsSuccess)
+                return new NoContentResult();
             return CreateProblemResult(result.Error, result.Errors);
         }
 

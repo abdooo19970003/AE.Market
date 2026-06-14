@@ -19,6 +19,7 @@ using StackExchange.Redis;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Backplane.StackExchangeRedis;
 using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
+using AE.Market.Infrastructure.Persistence.Seeders;
 
 namespace AE.Market.Infrastructure
 {

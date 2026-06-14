@@ -1,4 +1,5 @@
 ﻿using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using System.Text.RegularExpressions;
 
 namespace AE.Market.Domain.Aggregates.Auth.ValueObjects

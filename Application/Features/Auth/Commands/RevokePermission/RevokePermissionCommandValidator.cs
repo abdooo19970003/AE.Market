@@ -7,6 +7,6 @@ internal sealed class RevokePermissionCommandValidator : AbstractValidator<Revok
     public RevokePermissionCommandValidator()
     {
         RuleFor(c => c.UserId).NotEmpty();
-        RuleFor(c => c.Permission).NotEmpty();
+        RuleFor(c => c.PermissionName).NotEmpty();
     }
 }

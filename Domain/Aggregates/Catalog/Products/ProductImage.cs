@@ -4,7 +4,7 @@ namespace AE.Market.Domain.Aggregates.Catalog.Products;
 
 public sealed class ProductImage : BaseEntity
 {
-    public string Url { get; private set; }
+    public string Url { get; private set; } = string.Empty;
     public string? AltText { get; private set; }
     public bool IsPrimary { get; private set; }
     public int SortOrder { get; private set; }

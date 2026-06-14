@@ -9,9 +9,9 @@ namespace AE.Market.Domain.Aggregates.Catalog;
 
 public sealed class Category : BaseEntity, IAggregateRoot, IMetaData
 {
-    public string CategoryName { get; private set; }
-    public string Description { get; private set; }
-    public Slug Slug { get; private set; }
+    public string CategoryName { get; private set; } = string.Empty;
+    public string Description { get; private set; } = string.Empty;
+    public Slug Slug { get; private set; } = null!;
     public string? ImageUrl { get; private set; }
     public bool IsActive { get; private set; } = true;
     public int SortOrder { get; private set; }

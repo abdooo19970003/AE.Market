@@ -6,8 +6,8 @@ namespace AE.Market.Domain.Aggregates.Catalog.Units;
 
 public sealed class Unit : BaseEntity
 {
-    public string UnitName { get; private set; }
-    public string Abbreviation { get; private set; }
+    public string UnitName { get; private set; } = string.Empty;
+    public string Abbreviation { get; private set; } = string.Empty;
     public Guid GroupUnitId { get; private set; }
     public bool IsBaseUnit { get; private set; } = true;
     public decimal ExchangeRateToBaseUnit { get; private set; } = 1m;

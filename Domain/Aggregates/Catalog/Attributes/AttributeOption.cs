@@ -7,8 +7,8 @@ namespace AE.Market.Domain.Aggregates.Catalog.Attributes;
 public sealed class AttributeOption : BaseEntity
 {
     public Guid AttributeId { get; private set; }
-    public string Label { get; private set; }
-    public string Value { get; private set; }
+    public string Label { get; private set; } = string.Empty;
+    public string Value { get; private set; } = string.Empty;
     public int SortOrder { get; private set; }
 
     private AttributeOption(Guid id, Guid attributeId, string label, string value, int sortOrder)

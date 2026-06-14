@@ -5,8 +5,8 @@ namespace AE.Market.Domain.Aggregates.Catalog.Products;
 
 public sealed class Tag : BaseEntity
 {
-    public string Name { get; private set; }
-    public Slug Slug { get; private set; }
+    public string Name { get; private set; } = string.Empty;
+    public Slug Slug { get; private set; } = null!;
 
     private Tag(Guid id, string name, Slug slug)
         : base(id)

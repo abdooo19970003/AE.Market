@@ -6,8 +6,8 @@ namespace AE.Market.Domain.Aggregates.Catalog.Products;
 
 public sealed class Brand : BaseEntity, IAggregateRoot, IMetaData
 {
-    public string Name { get; private set; }
-    public Slug Slug { get; private set; }
+    public string Name { get; private set; } = string.Empty;
+    public Slug Slug { get; private set; } = null!;
     public string? ShortDescription { get; private set; }
     public string? LongDescription { get; private set; }
     public string? LogoUrl { get; private set; }

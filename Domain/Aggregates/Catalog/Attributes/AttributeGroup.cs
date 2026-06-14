@@ -6,7 +6,7 @@ namespace AE.Market.Domain.Aggregates.Catalog.Attributes;
 public sealed class AttributeGroup : BaseEntity
 {
     public Guid CategoryId { get; private set; }
-    public string GroupName { get; private set; }
+    public string GroupName { get; private set; } = string.Empty;
     public Slug? Slug { get; private set; }
     public int SortOrder { get; private set; }
 

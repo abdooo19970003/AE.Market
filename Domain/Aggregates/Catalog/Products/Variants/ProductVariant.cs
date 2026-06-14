@@ -8,8 +8,8 @@ namespace AE.Market.Domain.Aggregates.Catalog.Products.Variants;
 
 public sealed class ProductVariant : BaseEntity, IMetaData
 {
-    public string Name { get; private set; }
-    public Sku Sku { get; private set; }
+    public string Name { get; private set; } = string.Empty;
+    public Sku Sku { get; private set; } = null!;
     public bool IsActive { get; private set; } = true;
     public Guid ProductId { get; private set; }
 

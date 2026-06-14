@@ -4,8 +4,8 @@ namespace AE.Market.Domain.Aggregates.Auth
 {
     public sealed class RefreshToken : BaseEntity
     {
-        public string TokenHash { get; private set; }
-        public DateTime ExpiryTime { get; private set; }
+        public string TokenHash { get; private set; } = string.Empty;
+        public DateTime ExpiryTime { get; private set; } = DateTime.UtcNow;
         public bool IsExpired => DateTime.UtcNow >= ExpiryTime;
         public DateTime? ConsumedAt { get; private set; }
         public Guid UserId { get; private set; }

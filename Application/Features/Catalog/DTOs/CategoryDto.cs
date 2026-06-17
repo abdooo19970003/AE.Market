@@ -10,6 +10,7 @@ public sealed record CategoryDto
     public bool IsActive { get; set; }
     public int SortOrder { get; set; }
     public Guid? ParentId { get; set; }
+    public string Path { get; set; } = string.Empty;
     public string? MetaTitle { get; set; }
     public string? MetaDescription { get; set; }
     public string? MetaKeywords { get; set; }

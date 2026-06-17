@@ -34,14 +34,6 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasMaxLength(50)
             .IsRequired();
 
-        builder.OwnsOne(x => x.ShippingDimensions, dim =>
-        {
-            dim.Property(d => d.WeightInGrams).HasColumnName("shipping_weight_grams");
-            dim.Property(d => d.LongInCentimeter).HasColumnName("shipping_length_cm");
-            dim.Property(d => d.HeightInCentimeter).HasColumnName("shipping_height_cm");
-            dim.Property(d => d.WidthInCentimeter).HasColumnName("shipping_width_cm");
-        });
-
         builder.Ignore(x => x.SalePrice);
         builder.Ignore(x => x.StockQuantity);
 
@@ -63,6 +55,16 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(x => x.AttributeValues)
+            .WithOne()
+            .HasForeignKey(x => x.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.BundleItems)
+            .WithOne()
+            .HasForeignKey(x => x.BundleId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.Relations)
             .WithOne()
             .HasForeignKey(x => x.ProductId)
             .OnDelete(DeleteBehavior.Cascade);

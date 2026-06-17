@@ -18,7 +18,7 @@ internal sealed class GetProductsByBrandQueryHandler(
         var countSpec = new ProductsByBrandSpec(request.BrandId, request.IsActive);
         var totalCount = await repo.CountAsync(countSpec, cancellationToken);
 
-        var listSpec = new ProductsByBrandSpec(request.BrandId, request.Page, request.PageSize, request.IsActive, request.SortBy, request.SortDescending);
+        var listSpec = new ProductsByBrandSpec(request.BrandId, request.Page, request.PageSize, request.IsActive, request.SortBy, request.SortDescending ?? false);
         var products = await repo.ListWithSpecAsync(listSpec, cancellationToken);
         var dtos = mapper.Map<List<ProductDto>>(products);
 

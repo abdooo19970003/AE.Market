@@ -9,8 +9,8 @@ public static class CategorySeeder
         var electronics = Category.Create(Guid.NewGuid(), "Electronics", "electronics", "All electronic items");
         var clothing = Category.Create(Guid.NewGuid(), "Clothing", "clothing", "Apparel and accessories");
         var books = Category.Create(Guid.NewGuid(), "Books", "books", "Books and media");
-        var phones = Category.Create(Guid.NewGuid(), "Mobile Phones", "mobile-phones", "Smartphones and accessories", electronics.Id);
-        var laptops = Category.Create(Guid.NewGuid(), "Laptops", "laptops", "Notebooks and ultrabooks", electronics.Id);
+        var phones = Category.Create(Guid.NewGuid(), "Mobile Phones", "mobile-phones", "Smartphones and accessories", electronics.Id, parentPath: electronics.Path);
+        var laptops = Category.Create(Guid.NewGuid(), "Laptops", "laptops", "Notebooks and ultrabooks", electronics.Id, parentPath: electronics.Path);
 
         return [electronics, clothing, books, phones, laptops];
     }

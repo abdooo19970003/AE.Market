@@ -22,12 +22,14 @@ internal sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.Property(x => x.ImageUrl).HasMaxLength(1000);
         builder.Property(x => x.IsActive).HasDefaultValue(true);
         builder.Property(x => x.SortOrder).HasDefaultValue(0);
+        builder.Property(x => x.Path).HasMaxLength(1000).IsRequired();
         builder.Property(x => x.MetaTitle).HasMaxLength(200);
         builder.Property(x => x.MetaDescription).HasMaxLength(500);
         builder.Property(x => x.MetaKeywords).HasMaxLength(500);
 
         builder.HasIndex(x => x.Slug).IsUnique();
         builder.HasIndex(x => x.ParentId);
+        builder.HasIndex(x => x.Path);
 
         builder.Ignore(x => x.CategoryUrl);
 
@@ -37,6 +39,11 @@ internal sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(x => x.Attributes)
+            .WithOne()
+            .HasForeignKey(x => x.CategoryId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.AttributeGroups)
             .WithOne()
             .HasForeignKey(x => x.CategoryId)
             .OnDelete(DeleteBehavior.Cascade);

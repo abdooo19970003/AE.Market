@@ -16,6 +16,8 @@ public sealed class Category : BaseEntity, IAggregateRoot, IMetaData
     public bool IsActive { get; private set; } = true;
     public int SortOrder { get; private set; }
 
+    // The Materialized Path (e.g., "00000000-0000-.../guid-guid-guid/")
+    public string Path { get; private set; } = string.Empty;
     public URL CategoryUrl => URL.Create("Categories", Slug);
 
     public Guid? ParentId { get; private set; }
@@ -42,16 +44,29 @@ public sealed class Category : BaseEntity, IAggregateRoot, IMetaData
         string? description,
         Guid? parentId,
         string? imageUrl,
-        int sortOrder
+        int sortOrder,
+        string? parentPath
     )
         : base(id)
     {
         CategoryName = name;
         Slug = slug;
         Description = description ?? string.Empty;
-        ParentId = parentId;
         ImageUrl = imageUrl;
         SortOrder = sortOrder;
+
+        if (parentId is not null)
+        {
+            if (parentId == id)
+                throw new DomainException(CatalogErrors.CategoryCannotBeOwnChild.Code, CatalogErrors.CategoryCannotBeOwnChild.Message);
+            ParentId = parentId;
+            Path = parentPath is not null ? $"{parentPath}{id}/" : $"{id}/";
+        }
+        else
+        {
+            ParentId = null;
+            Path = $"{id}/";
+        }
     }
 
     private Category() { }
@@ -63,10 +78,11 @@ public sealed class Category : BaseEntity, IAggregateRoot, IMetaData
         string? description = null,
         Guid? parentId = null,
         string? imageUrl = null,
-        int sortOrder = 0
+        int sortOrder = 0,
+        string? parentPath = null
     )
     {
-        var category = new Category(id, name, Slug.Create(slug), description, parentId, imageUrl, sortOrder);
+        var category = new Category(id, name, Slug.Create(slug), description, parentId, imageUrl, sortOrder, parentPath);
         category.AddDomainEvent(new CategoryCreatedDomainEvent(category.Id));
         return category;
     }
@@ -107,7 +123,7 @@ public sealed class Category : BaseEntity, IAggregateRoot, IMetaData
         UpdateLastModified();
     }
 
-    public void ChangeParent(Guid? newParentId)
+    public void ChangeParent(Guid? newParentId, string? newParentPath = null)
     {
         if (newParentId == Id)
             throw new DomainException(CatalogErrors.CategoryCannotBeOwnChild.Code, CatalogErrors.CategoryCannotBeOwnChild.Message);
@@ -119,8 +135,18 @@ public sealed class Category : BaseEntity, IAggregateRoot, IMetaData
             return;
 
         var oldParentId = ParentId;
+        var oldPath = Path;
         ParentId = newParentId;
-        AddDomainEvent(new CategoryParentChangedDomainEvent(Id, oldParentId, newParentId));
+        Path = newParentId is not null && newParentPath is not null
+            ? $"{newParentPath}{Id}/"
+            : $"{Id}/";
+        AddDomainEvent(new CategoryParentChangedDomainEvent(Id, oldParentId, newParentId, oldPath, Path));
+        UpdateLastModified();
+    }
+
+    internal void UpdatePath(string newPath)
+    {
+        Path = newPath;
         UpdateLastModified();
     }
 

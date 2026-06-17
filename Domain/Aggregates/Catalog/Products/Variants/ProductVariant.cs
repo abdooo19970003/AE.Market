@@ -20,8 +20,9 @@ public sealed class ProductVariant : BaseEntity, IMetaData
     public int AvailableQuantity => StockQuantity - ReservedQuantity;
     public byte[] RowVersion { get; private set; } = [];
 
-    private readonly List<VariantAttributeValue> _attributeValues = [];
-    public IReadOnlyCollection<VariantAttributeValue> AttributeValues => _attributeValues.AsReadOnly();
+    private readonly List<ProductAttributeValue> _attributeValues = [];
+    public IReadOnlyCollection<ProductAttributeValue> AttributeValues =>
+        _attributeValues.AsReadOnly();
 
     private readonly List<VariantImage> _images = [];
     public IReadOnlyCollection<VariantImage> Images => _images.AsReadOnly();
@@ -56,45 +57,80 @@ public sealed class ProductVariant : BaseEntity, IMetaData
 
     internal void Activate()
     {
-        if (IsActive) return;
+        if (IsActive)
+            return;
         IsActive = true;
         UpdateLastModified();
     }
 
     internal void Deactivate()
     {
-        if (!IsActive) return;
+        if (!IsActive)
+            return;
         IsActive = false;
         UpdateLastModified();
     }
 
-    internal VariantAttributeValue SetAttributeValue(Guid valueId, Guid attributeId, AttributeInputType inputType,
+    internal ProductAttributeValue SetAttributeValue(
+        Guid valueId,
+        Guid attributeId,
+        AttributeInputType inputType,
         string? textValue = null,
-        int? integerValue = null, decimal? decimalValue = null, bool? booleanValue = null,
-        DateTime? dateTimeValue = null, Guid? optionId = null)
+        int? integerValue = null,
+        decimal? decimalValue = null,
+        bool? booleanValue = null,
+        DateTime? dateTimeValue = null,
+        Guid? optionId = null
+    )
     {
         var existing = _attributeValues.Find(av => av.AttributeId == attributeId);
         if (existing is not null)
         {
-            existing.UpdateValue(inputType, textValue, integerValue, decimalValue, booleanValue, dateTimeValue, optionId);
+            existing.UpdateValue(
+                inputType,
+                textValue,
+                integerValue,
+                decimalValue,
+                booleanValue,
+                dateTimeValue,
+                optionId
+            );
             return existing;
         }
 
-        var value = VariantAttributeValue.Create(valueId, Id, attributeId, inputType, textValue, integerValue,
-            decimalValue, booleanValue, dateTimeValue, optionId);
+        var value = ProductAttributeValue.Create(
+            valueId,
+            attributeId,
+            null,
+            Id,
+            null,
+            inputType,
+            textValue,
+            integerValue,
+            decimalValue,
+            booleanValue,
+            dateTimeValue,
+            optionId
+        );
         _attributeValues.Add(value);
         UpdateLastModified();
         return value;
     }
 
-    internal void RemoveAttributeValue(VariantAttributeValue value)
+    internal void RemoveAttributeValue(ProductAttributeValue value)
     {
         value.Delete();
         _attributeValues.Remove(value);
         UpdateLastModified();
     }
 
-    internal VariantImage AddImage(Guid imageId, string url, string? altText, bool isPrimary = false, int sortOrder = 0)
+    internal VariantImage AddImage(
+        Guid imageId,
+        string url,
+        string? altText,
+        bool isPrimary = false,
+        int sortOrder = 0
+    )
     {
         if (isPrimary)
         {
@@ -129,7 +165,10 @@ public sealed class ProductVariant : BaseEntity, IMetaData
     internal void SetQuantity(int quantity)
     {
         if (quantity < ReservedQuantity)
-            throw new DomainException(CatalogErrors.InsufficientStock.Code, CatalogErrors.InsufficientStock.Message);
+            throw new DomainException(
+                CatalogErrors.InsufficientStock.Code,
+                CatalogErrors.InsufficientStock.Message
+            );
         ApplyStockChange(quantity);
     }
 
@@ -137,14 +176,20 @@ public sealed class ProductVariant : BaseEntity, IMetaData
     {
         var newQuantity = StockQuantity + delta;
         if (newQuantity < 0)
-            throw new DomainException(CatalogErrors.InsufficientStock.Code, CatalogErrors.InsufficientStock.Message);
+            throw new DomainException(
+                CatalogErrors.InsufficientStock.Code,
+                CatalogErrors.InsufficientStock.Message
+            );
         ApplyStockChange(newQuantity);
     }
 
     internal void ReserveStock(int quantity)
     {
         if (quantity > AvailableQuantity)
-            throw new DomainException(CatalogErrors.InsufficientStock.Code, CatalogErrors.InsufficientStock.Message);
+            throw new DomainException(
+                CatalogErrors.InsufficientStock.Code,
+                CatalogErrors.InsufficientStock.Message
+            );
         ReservedQuantity += quantity;
         UpdateLastModified();
     }
@@ -176,7 +221,8 @@ public sealed class ProductVariant : BaseEntity, IMetaData
         IsActive = true;
         base.Restore();
     }
-    public void SetOrUpdateMetaFields(string? title, string? description, string? keywords)
+
+    internal void SetOrUpdateMetaFields(string? title, string? description, string? keywords)
     {
         MetaTitle = title;
         MetaDescription = description;

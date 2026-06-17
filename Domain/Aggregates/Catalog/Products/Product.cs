@@ -18,13 +18,20 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     public string? LongDescription { get; private set; }
     public bool IsActive { get; private set; } = true;
     public URL Url => URL.Create("products", Slug);
-    public bool IsPurchasable => IsActive && (
-        ProductType is ProductType.Simple or ProductType.Digital
-        || _variants.Any(v => v.IsActive));
+    public bool IsPurchasable =>
+        IsActive
+        && (
+            ProductType is ProductType.Simple or ProductType.Digital
+            || (ProductType == ProductType.Bundle && _bundleItems.Count > 0)
+            || _variants.Any(v => v.IsActive)
+        );
 
     public Guid BrandId { get; private set; }
 
     public ProductType ProductType { get; private set; }
+
+    public bool AllowBackOrder { get; private set; }
+    public int? BackOrderLimit { get; private set; }
 
     // SEO
     public string? MetaTitle { get; private set; }
@@ -46,13 +53,19 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     public IReadOnlyCollection<Tag> Tags => _tags.AsReadOnly();
 
     private readonly List<ProductAttributeValue> _attributeValues = [];
-    public IReadOnlyCollection<ProductAttributeValue> AttributeValues => _attributeValues.AsReadOnly();
+    public IReadOnlyCollection<ProductAttributeValue> AttributeValues =>
+        _attributeValues.AsReadOnly();
 
     private readonly List<ProductRelation> _relations = [];
     public IReadOnlyCollection<ProductRelation> Relations => _relations.AsReadOnly();
 
-    public decimal SalePrice => _variants.Where(v => v.IsActive && v.SalePrice > 0).Min(v => (decimal?)v.SalePrice) ?? 0m;
+    public decimal SalePrice =>
+        _variants.Where(v => v.IsActive && v.SalePrice > 0).Min(v => (decimal?)v.SalePrice) ?? 0m;
     public int StockQuantity => _variants.Sum(v => v.StockQuantity);
+
+    // FOR Bundles
+    private readonly List<BundleItem> _bundleItems = [];
+    public IReadOnlyCollection<BundleItem> BundleItems => _bundleItems.AsReadOnly();
 
     private Product(
         Guid id,
@@ -85,7 +98,15 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
         string? details = null
     )
     {
-        var product = new Product(id, name, Slug.Create(slug), Sku.Create(sku), categoryId, type, details);
+        var product = new Product(
+            id,
+            name,
+            Slug.Create(slug),
+            Sku.Create(sku),
+            categoryId,
+            type,
+            details
+        );
         product.AddDomainEvent(new ProductCreatedDomainEvent(product.Id));
         return product;
     }
@@ -105,7 +126,14 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
         MetaKeywords = metaKeywords;
         AddDomainEvent(new ProductDetailsUpdatedDomainEvent(Id, name, Details));
         if (metaTitle is not null || metaDescription is not null || metaKeywords is not null)
-            AddDomainEvent(new ProductMetaFieldsUpdatedDomainEvent(Id, metaTitle, metaDescription, metaKeywords));
+            AddDomainEvent(
+                new ProductMetaFieldsUpdatedDomainEvent(
+                    Id,
+                    metaTitle,
+                    metaDescription,
+                    metaKeywords
+                )
+            );
         UpdateLastModified();
     }
 
@@ -153,8 +181,16 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     {
         if (IsActive)
             return;
-        if (ProductType is not (ProductType.Simple or ProductType.Digital) && _variants.Count == 0)
-            throw new DomainException(CatalogErrors.ProductNoVariants.Code, CatalogErrors.ProductNoVariants.Message);
+        if (ProductType is not (ProductType.Simple or ProductType.Digital or ProductType.Bundle) && _variants.Count == 0)
+            throw new DomainException(
+                CatalogErrors.ProductNoVariants.Code,
+                CatalogErrors.ProductNoVariants.Message
+            );
+        if (ProductType == ProductType.Bundle && _bundleItems.Count == 0)
+            throw new DomainException(
+                CatalogErrors.BundleProductHasNoItems.Code,
+                CatalogErrors.BundleProductHasNoItems.Message
+            );
         IsActive = true;
         AddDomainEvent(new ProductActivatedDomainEvent(Id));
         UpdateLastModified();
@@ -181,7 +217,10 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     public void RemoveVariant(ProductVariant variant)
     {
         if (_variants.Count <= 1 && IsActive)
-            throw new DomainException(CatalogErrors.CannotRemoveLastVariant.Code, CatalogErrors.CannotRemoveLastVariant.Message);
+            throw new DomainException(
+                CatalogErrors.CannotRemoveLastVariant.Code,
+                CatalogErrors.CannotRemoveLastVariant.Message
+            );
         variant.Delete();
         _variants.Remove(variant);
         AddDomainEvent(new ProductVariantRemovedDomainEvent(Id, variant.Id));
@@ -261,10 +300,25 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
         UpdateLastModified();
     }
 
-    public ProductRelation AddRelation(Guid relationId, Guid relatedProductId, RelationType type, int sortOrder = 0)
+    public void SetAllowBackOrder(bool allowBackOrder, int? backOrderLimit = null)
+    {
+        AllowBackOrder = allowBackOrder;
+        BackOrderLimit = allowBackOrder ? backOrderLimit : null;
+        UpdateLastModified();
+    }
+
+    public ProductRelation AddRelation(
+        Guid relationId,
+        Guid relatedProductId,
+        RelationType type,
+        int sortOrder = 0
+    )
     {
         if (relatedProductId == Id)
-            throw new DomainException(CatalogErrors.ProductCannotRelateToSelf.Code, CatalogErrors.ProductCannotRelateToSelf.Message);
+            throw new DomainException(
+                CatalogErrors.ProductCannotRelateToSelf.Code,
+                CatalogErrors.ProductCannotRelateToSelf.Message
+            );
 
         if (_relations.Any(r => r.RelatedProductId == relatedProductId && r.Type == type))
             return _relations.First(r => r.RelatedProductId == relatedProductId && r.Type == type);
@@ -280,7 +334,9 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     {
         relation.Delete();
         _relations.Remove(relation);
-        AddDomainEvent(new ProductRelationRemovedDomainEvent(Id, relation.RelatedProductId, relation.Type));
+        AddDomainEvent(
+            new ProductRelationRemovedDomainEvent(Id, relation.RelatedProductId, relation.Type)
+        );
         UpdateLastModified();
     }
 
@@ -288,11 +344,22 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     {
         var variant = _variants.FirstOrDefault(v => v.Id == variantId);
         if (variant is null)
-            throw new DomainException(CatalogErrors.VariantNotFound.Code, CatalogErrors.VariantNotFound.Message);
+            throw new DomainException(
+                CatalogErrors.VariantNotFound.Code,
+                CatalogErrors.VariantNotFound.Message
+            );
 
         var oldQuantity = variant.StockQuantity;
         variant.SetQuantity(quantity);
-        AddDomainEvent(new VariantStockAdjustedDomainEvent(Id, variantId, oldQuantity, quantity, quantity - oldQuantity));
+        AddDomainEvent(
+            new VariantStockAdjustedDomainEvent(
+                Id,
+                variantId,
+                oldQuantity,
+                quantity,
+                quantity - oldQuantity
+            )
+        );
         UpdateLastModified();
     }
 
@@ -300,12 +367,17 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     {
         var variant = _variants.FirstOrDefault(v => v.Id == variantId);
         if (variant is null)
-            throw new DomainException(CatalogErrors.VariantNotFound.Code, CatalogErrors.VariantNotFound.Message);
+            throw new DomainException(
+                CatalogErrors.VariantNotFound.Code,
+                CatalogErrors.VariantNotFound.Message
+            );
 
         var oldQuantity = variant.StockQuantity;
         variant.AdjustStock(delta);
         var newQuantity = variant.StockQuantity;
-        AddDomainEvent(new VariantStockAdjustedDomainEvent(Id, variantId, oldQuantity, newQuantity, delta));
+        AddDomainEvent(
+            new VariantStockAdjustedDomainEvent(Id, variantId, oldQuantity, newQuantity, delta)
+        );
         UpdateLastModified();
     }
 
@@ -313,7 +385,10 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     {
         var variant = _variants.FirstOrDefault(v => v.Id == variantId);
         if (variant is null)
-            throw new DomainException(CatalogErrors.VariantNotFound.Code, CatalogErrors.VariantNotFound.Message);
+            throw new DomainException(
+                CatalogErrors.VariantNotFound.Code,
+                CatalogErrors.VariantNotFound.Message
+            );
 
         variant.ReserveStock(quantity);
         UpdateLastModified();
@@ -323,7 +398,10 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     {
         var variant = _variants.FirstOrDefault(v => v.Id == variantId);
         if (variant is null)
-            throw new DomainException(CatalogErrors.VariantNotFound.Code, CatalogErrors.VariantNotFound.Message);
+            throw new DomainException(
+                CatalogErrors.VariantNotFound.Code,
+                CatalogErrors.VariantNotFound.Message
+            );
 
         variant.ReleaseStock(quantity);
         UpdateLastModified();
@@ -333,7 +411,10 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     {
         var variant = _variants.FirstOrDefault(v => v.Id == variantId);
         if (variant is null)
-            throw new DomainException(CatalogErrors.VariantNotFound.Code, CatalogErrors.VariantNotFound.Message);
+            throw new DomainException(
+                CatalogErrors.VariantNotFound.Code,
+                CatalogErrors.VariantNotFound.Message
+            );
 
         var oldPrice = variant.SalePrice;
         variant.SetOrUpdateSellingPrice(price);
@@ -345,23 +426,44 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
         Guid valueId,
         Guid attributeId,
         AttributeInputType inputType,
+        bool? isVariantDefiner,
         string? textValue = null,
         int? integerValue = null,
         decimal? decimalValue = null,
         bool? booleanValue = null,
         DateTime? dateTimeValue = null,
-        Guid? optionId = null)
+        Guid? optionId = null
+    )
     {
         var existing = _attributeValues.Find(av => av.AttributeId == attributeId);
         if (existing is not null)
         {
-            existing.UpdateValue(inputType, textValue, integerValue, decimalValue,
-                booleanValue, dateTimeValue, optionId);
+            existing.UpdateValue(
+                inputType,
+                textValue,
+                integerValue,
+                decimalValue,
+                booleanValue,
+                dateTimeValue,
+                optionId
+            );
             return existing;
         }
 
-        var value = ProductAttributeValue.Create(valueId, Id, attributeId, inputType,
-            textValue, integerValue, decimalValue, booleanValue, dateTimeValue, optionId);
+        var value = ProductAttributeValue.Create(
+            valueId,
+            attributeId,
+            Id,
+            null,
+            isVariantDefiner,
+            inputType,
+            textValue,
+            integerValue,
+            decimalValue,
+            booleanValue,
+            dateTimeValue,
+            optionId
+        );
         _attributeValues.Add(value);
         UpdateLastModified();
         return value;
@@ -375,7 +477,8 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     }
 
     public IReadOnlyCollection<Guid> GetMissingRequiredAttributeIds(
-        IReadOnlyCollection<Guid> requiredAttributeIds)
+        IReadOnlyCollection<Guid> requiredAttributeIds
+    )
     {
         var coveredAttributes = _attributeValues
             .Where(v => !v.IsDeleted)
@@ -405,6 +508,8 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
             tag.Delete();
         foreach (var attrVal in _attributeValues)
             attrVal.Delete();
+        foreach (var bundleItem in _bundleItems)
+            bundleItem.Delete();
         IsActive = false;
         AddDomainEvent(new ProductDeletedDomainEvent(Id));
         base.Delete();
@@ -412,9 +517,45 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
 
     public override void Restore()
     {
-        if (ProductType is not (ProductType.Simple or ProductType.Digital) && _variants.Count == 0)
-            throw new DomainException(CatalogErrors.ProductNoVariants.Code, CatalogErrors.ProductNoVariants.Message);
+        if (ProductType is not (ProductType.Simple or ProductType.Digital or ProductType.Bundle) && _variants.Count == 0)
+            throw new DomainException(
+                CatalogErrors.ProductNoVariants.Code,
+                CatalogErrors.ProductNoVariants.Message
+            );
+        if (ProductType == ProductType.Bundle && _bundleItems.Count == 0)
+            throw new DomainException(
+                CatalogErrors.BundleProductHasNoItems.Code,
+                CatalogErrors.BundleProductHasNoItems.Message
+            );
         IsActive = true;
         base.Restore();
+    }
+
+    public BundleItem AddBundleItem(Guid id, Guid itemId, int quantity)
+    {
+        if (ProductType != ProductType.Bundle)
+            throw new DomainException(
+                CatalogErrors.CannotAddBundleItemToNonBundleProduct.Code,
+                CatalogErrors.CannotAddBundleItemToNonBundleProduct.Message
+            );
+        var item = new BundleItem(id, Id, itemId, quantity);
+        _bundleItems.Add(item);
+        AddDomainEvent(new BundleItemAddedDomainEvent(Id, id, itemId, quantity));
+        UpdateLastModified();
+        return item;
+    }
+
+    public void RemoveBundleItem(Guid bundleItemId)
+    {
+        var item =
+            _bundleItems.FirstOrDefault(i => i.Id == bundleItemId)
+            ?? throw new DomainException(
+                CatalogErrors.BundleItemNotFound.Code,
+                CatalogErrors.BundleItemNotFound.Message
+            );
+        item.Delete();
+        _bundleItems.Remove(item);
+        AddDomainEvent(new BundleItemRemovedDomainEvent(Id, bundleItemId));
+        UpdateLastModified();
     }
 }

@@ -1,4 +1,5 @@
 ﻿using AE.Market.Domain.Aggregates.Auth;
+using AE.Market.Domain.Aggregates.Auth.ValueObjects;
 using AE.Market.Domain.Common.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -43,7 +44,7 @@ namespace AE.Market.Infrastructure.Persistence.Configurations.Auth
                 a.Property(addr => addr.AddressLine).HasMaxLength(500);
                 a.Property(addr => addr.Label).HasMaxLength(100);
                 a.Property(addr => addr.Type).HasConversion<string>().HasMaxLength(50);
-                a.Ignore(addr => addr.IsPrimary);
+                a.Property(addr => addr.IsPrimary).HasDefaultValue(false);
             });
         }
     }

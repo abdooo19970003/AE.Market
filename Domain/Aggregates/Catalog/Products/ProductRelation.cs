@@ -35,7 +35,7 @@ public sealed class ProductRelation : BaseEntity
         return new ProductRelation(id, productId, relatedProductId, type, sortOrder);
     }
 
-    public void UpdateSortOrder(int sortOrder)
+    internal void UpdateSortOrder(int sortOrder)
     {
         SortOrder = sortOrder;
         UpdateLastModified();

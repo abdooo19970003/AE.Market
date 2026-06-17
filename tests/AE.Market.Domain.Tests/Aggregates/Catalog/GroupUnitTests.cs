@@ -212,4 +212,63 @@ public sealed class GroupUnitTests
             result.Should().Be(0m);
         }
     }
+
+    public sealed class EventRaised
+    {
+        [Fact]
+        public void AddUnit_RaisesUnitAddedEvent()
+        {
+            var group = GroupUnit.Create(Guid.NewGuid(), "Weight");
+
+            group.AddUnit(Guid.NewGuid(), "Kilogram", "kg", isBaseUnit: true, exchangeRateToBaseUnit: 1m);
+
+            group.DomainEvents.Should().Contain(e => e is GroupUnitUnitAddedDomainEvent);
+            var evt = group.DomainEvents.OfType<GroupUnitUnitAddedDomainEvent>().Single();
+            evt.GroupUnitId.Should().Be(group.Id);
+            evt.UnitName.Should().Be("Kilogram");
+        }
+
+        [Fact]
+        public void RemoveUnit_RaisesUnitRemovedEvent()
+        {
+            var group = GroupUnit.Create(Guid.NewGuid(), "Weight");
+            var unit = group.AddUnit(Guid.NewGuid(), "Kilogram", "kg", isBaseUnit: true, exchangeRateToBaseUnit: 1m);
+            group.ClearDomainEvents();
+
+            group.RemoveUnit(unit);
+
+            group.DomainEvents.Should().Contain(e => e is GroupUnitUnitRemovedDomainEvent);
+            var evt = group.DomainEvents.OfType<GroupUnitUnitRemovedDomainEvent>().Single();
+            evt.GroupUnitId.Should().Be(group.Id);
+            evt.UnitId.Should().Be(unit.Id);
+        }
+
+        [Fact]
+        public void Rename_RaisesGroupUnitRenamedDomainEvent()
+        {
+            var group = GroupUnit.Create(Guid.NewGuid(), "Weight");
+            group.ClearDomainEvents();
+
+            group.Rename("Mass");
+
+            group.DomainEvents.Should().Contain(e => e is GroupUnitRenamedDomainEvent);
+            var evt = group.DomainEvents.OfType<GroupUnitRenamedDomainEvent>().Single();
+            evt.GroupUnitId.Should().Be(group.Id);
+            evt.OldName.Should().Be("Weight");
+            evt.NewName.Should().Be("Mass");
+        }
+
+        [Fact]
+        public void Delete_RaisesGroupUnitDeletedDomainEvent()
+        {
+            var group = GroupUnit.Create(Guid.NewGuid(), "Weight");
+            group.ClearDomainEvents();
+
+            group.Delete();
+
+            group.DomainEvents.Should().Contain(e => e is GroupUnitDeletedDomainEvent);
+            var evt = group.DomainEvents.OfType<GroupUnitDeletedDomainEvent>().Single();
+            evt.GroupUnitId.Should().Be(group.Id);
+        }
+    }
 }

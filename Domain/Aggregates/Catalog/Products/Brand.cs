@@ -106,6 +106,7 @@ public sealed class Brand : BaseEntity, IAggregateRoot, IMetaData
 
     public override void Delete()
     {
+        if (IsDeleted) return;
         AddDomainEvent(new BrandDeletedDomainEvent(Id));
         base.Delete();
     }

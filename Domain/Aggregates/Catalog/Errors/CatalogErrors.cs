@@ -143,4 +143,16 @@ public static class CatalogErrors
         "Catalog.Product.CannotRelateToSelf",
         "A product cannot create a relation to itself."
     );
+    public static readonly Error CannotAddBundleItemToNonBundleProduct = new(
+        "Catalog.Product.CannotAddBundleItemToNonBundleProduct",
+        "Can not Add Bundle Item To Non Bundle Product"
+    );
+    public static readonly Error BundleItemNotFound = new(
+        "Catalog.Product.BundleItemNotFound",
+        "Bundle item not found"
+    );
+    public static readonly Error BundleProductHasNoItems = new(
+        "Catalog.Product.BundleProductHasNoItems",
+        "A Bundle product must have at least one bundle item."
+    );
 }

@@ -38,7 +38,7 @@ public sealed class AuthIntegrationTests(IntegrationTestWebAppFactory factory)
 
         var response = await _client.PostAsJsonAsync($"{BasePath}/register", command);
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
         var tokens = await response.Content.ReadFromJsonAsync<TokensResponseDto>();
         tokens.Should().NotBeNull();
         tokens!.AccessToken.Should().NotBeNullOrEmpty();
@@ -72,7 +72,7 @@ public sealed class AuthIntegrationTests(IntegrationTestWebAppFactory factory)
         var command = new RegisterCommand(email, "Password123");
 
         var first = await _client.PostAsJsonAsync($"{BasePath}/register", command);
-        first.StatusCode.Should().Be(HttpStatusCode.OK);
+        first.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var second = await _client.PostAsJsonAsync($"{BasePath}/register", command);
         second.StatusCode.Should().Be(HttpStatusCode.Conflict);
@@ -224,7 +224,7 @@ public sealed class AuthIntegrationTests(IntegrationTestWebAppFactory factory)
 
         var refreshResponse = await _client.PostAsJsonAsync($"{BasePath}/refresh",
             new { OldToken = tokens.RefreshToken });
-        refreshResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        refreshResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -235,7 +235,7 @@ public sealed class AuthIntegrationTests(IntegrationTestWebAppFactory factory)
 
         var registerResponse = await _client.PostAsJsonAsync($"{BasePath}/register",
             new RegisterCommand(email, password));
-        registerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
         var tokens = await registerResponse.Content.ReadFromJsonAsync<TokensResponseDto>();
         tokens.Should().NotBeNull();
 

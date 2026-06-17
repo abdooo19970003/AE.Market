@@ -1,4 +1,5 @@
 using AE.Market.Domain.Aggregates.Catalog.Attributes;
+using AE.Market.Domain.Aggregates.Catalog.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -12,7 +13,9 @@ internal sealed class CategoryAttributeConfiguration : IEntityTypeConfiguration<
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.AttributeName).HasMaxLength(200).IsRequired();
-        builder.Property(x => x.Slug).HasMaxLength(300);
+        builder.Property(x => x.Slug)
+            .HasConversion(v => v == null ? null : v.Value, v => v == null ? null : Slug.Create(v))
+            .HasMaxLength(300);
         builder.Property(x => x.InputType).HasConversion<int>().IsRequired();
         builder.Property(x => x.IsRequired).HasDefaultValue(false);
         builder.Property(x => x.IsFilterable).HasDefaultValue(false);

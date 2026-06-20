@@ -55,12 +55,37 @@ public sealed class ProductVariant : BaseEntity, IMetaData
         UpdateLastModified();
     }
 
-    internal void Activate()
+    internal void Activate(IReadOnlyCollection<Guid>? requiredAttributeIds = null)
     {
         if (IsActive)
             return;
+        if (requiredAttributeIds is not null && !HasAllRequiredAttributes(requiredAttributeIds))
+            throw new DomainException(
+                CatalogErrors.VariantMissingRequiredAttributes.Code,
+                CatalogErrors.VariantMissingRequiredAttributes.Message
+            );
         IsActive = true;
         UpdateLastModified();
+    }
+
+    internal IReadOnlyCollection<Guid> GetMissingRequiredAttributeIds(
+        IReadOnlyCollection<Guid> requiredAttributeIds
+    )
+    {
+        var coveredAttributes = _attributeValues
+            .Where(v => !v.IsDeleted)
+            .Select(v => v.AttributeId)
+            .ToHashSet();
+
+        return requiredAttributeIds
+            .Where(id => !coveredAttributes.Contains(id))
+            .ToList()
+            .AsReadOnly();
+    }
+
+    internal bool HasAllRequiredAttributes(IReadOnlyCollection<Guid> requiredAttributeIds)
+    {
+        return GetMissingRequiredAttributeIds(requiredAttributeIds).Count == 0;
     }
 
     internal void Deactivate()

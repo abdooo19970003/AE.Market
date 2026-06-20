@@ -183,7 +183,7 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
         UpdateLastModified();
     }
 
-    public void Activate()
+    public void Activate(IReadOnlyCollection<Guid>? requiredAttributeIds = null)
     {
         if (IsActive)
             return;
@@ -202,6 +202,11 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
             throw new DomainException(
                 CatalogErrors.ProductMissingSuperAttributes.Code,
                 CatalogErrors.ProductMissingSuperAttributes.Message
+            );
+        if (requiredAttributeIds is not null && !HasAllRequiredAttributes(requiredAttributeIds))
+            throw new DomainException(
+                CatalogErrors.ProductMissingRequiredAttributes.Code,
+                CatalogErrors.ProductMissingRequiredAttributes.Message
             );
         IsActive = true;
         AddDomainEvent(new ProductActivatedDomainEvent(Id));

@@ -2,6 +2,7 @@ using AE.Market.Domain.Aggregates.Catalog.Attributes;
 using AE.Market.Domain.Aggregates.Catalog.Events;
 using AE.Market.Domain.Aggregates.Catalog.Products;
 using AE.Market.Domain.Aggregates.Catalog.Products.Variants;
+using AE.Market.Domain.Aggregates.Catalog.ValueObjects;
 using AE.Market.Domain.Exceptions;
 using FluentAssertions;
 
@@ -118,7 +119,7 @@ public sealed class ProductVariantTests
             variant.Delete();
 
             variant.IsDeleted.Should().BeTrue();
-            variant.IsActive.Should().BeFalse();
+            variant.Status.Should().Be(ProductStatus.Suspended);
             image.IsDeleted.Should().BeTrue();
         }
 

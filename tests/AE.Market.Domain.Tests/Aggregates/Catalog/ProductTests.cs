@@ -47,7 +47,7 @@ public sealed class ProductTests
             product.Sku.Value.Should().Be("XI-12P-256-BLK");
             product.CategoryId.Should().Be(categoryId);
             product.ProductType.Should().Be(ProductType.Configurable);
-            product.IsActive.Should().BeTrue();
+            product.Status.Should().Be(ProductStatus.Active);
         }
 
         [Fact]
@@ -289,7 +289,7 @@ public sealed class ProductTests
 
             product.Deactivate();
 
-            product.IsActive.Should().BeFalse();
+            product.Status.Should().Be(ProductStatus.Suspended);
         }
 
         [Fact]
@@ -302,7 +302,7 @@ public sealed class ProductTests
 
             product.Activate();
 
-            product.IsActive.Should().BeTrue();
+            product.Status.Should().Be(ProductStatus.Active);
         }
 
         [Fact]
@@ -327,7 +327,7 @@ public sealed class ProductTests
             product.Delete();
 
             product.IsDeleted.Should().BeTrue();
-            product.IsActive.Should().BeFalse();
+            product.Status.Should().Be(ProductStatus.Suspended);
             variant.IsDeleted.Should().BeTrue();
         }
 
@@ -378,7 +378,7 @@ public sealed class ProductTests
             var act = () => product.Activate();
 
             act.Should().Throw<DomainException>();
-            product.IsActive.Should().BeFalse();
+            product.Status.Should().Be(ProductStatus.Suspended);
         }
 
         [Fact]
@@ -392,7 +392,7 @@ public sealed class ProductTests
 
             product.Activate();
 
-            product.IsActive.Should().BeTrue();
+            product.Status.Should().Be(ProductStatus.Active);
         }
     }
 
@@ -409,7 +409,7 @@ public sealed class ProductTests
 
             product.Restore();
 
-            product.IsActive.Should().BeTrue();
+            product.Status.Should().Be(ProductStatus.Active);
             product.IsDeleted.Should().BeFalse();
         }
 
@@ -732,7 +732,7 @@ public sealed class ProductTests
             var act = () => product.Activate();
 
             act.Should().Throw<DomainException>();
-            product.IsActive.Should().BeFalse();
+            product.Status.Should().Be(ProductStatus.Suspended);
         }
 
         [Fact]
@@ -745,7 +745,7 @@ public sealed class ProductTests
 
             product.Activate();
 
-            product.IsActive.Should().BeTrue();
+            product.Status.Should().Be(ProductStatus.Active);
         }
 
         [Fact]

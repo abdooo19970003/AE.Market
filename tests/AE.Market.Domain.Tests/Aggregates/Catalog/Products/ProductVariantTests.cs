@@ -1,5 +1,6 @@
 using AE.Market.Domain.Aggregates.Catalog.Products;
 using AE.Market.Domain.Aggregates.Catalog.Products.Variants;
+using AE.Market.Domain.Aggregates.Catalog.ValueObjects;
 using FluentAssertions;
 
 namespace AE.Market.Domain.Tests.Aggregates.Catalog.Products;
@@ -34,7 +35,7 @@ public sealed class ProductVariantTests
 
             variant.Activate();
 
-            variant.IsActive.Should().BeTrue();
+            variant.Status.Should().Be(ProductStatus.Active);
         }
 
         [Fact]
@@ -44,7 +45,7 @@ public sealed class ProductVariantTests
 
             variant.Deactivate();
 
-            variant.IsActive.Should().BeFalse();
+            variant.Status.Should().Be(ProductStatus.Suspended);
         }
     }
 

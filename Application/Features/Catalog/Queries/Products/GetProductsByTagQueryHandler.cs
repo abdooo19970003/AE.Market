@@ -17,10 +17,10 @@ internal sealed class GetProductsByTagQueryHandler(
         GetProductsByTagQuery request,
         CancellationToken cancellationToken)
     {
-        var countSpec = new ProductsByTagSpec(request.TagSlug, request.IsActive);
+        var countSpec = new ProductsByTagSpec(request.TagSlug, request.Status);
         var totalCount = await repo.CountAsync(countSpec, cancellationToken);
 
-        var listSpec = new ProductsByTagSpec(request.TagSlug, request.Page, request.PageSize, request.IsActive);
+        var listSpec = new ProductsByTagSpec(request.TagSlug, request.Page, request.PageSize, request.Status);
         var products = await repo.ListWithSpecAsync(listSpec, cancellationToken);
 
         var dtos = mapper.Map<List<ProductDto>>(products);

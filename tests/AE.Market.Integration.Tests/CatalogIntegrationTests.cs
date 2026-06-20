@@ -586,7 +586,7 @@ public sealed class CatalogIntegrationTests(IntegrationTestWebAppFactory factory
         variant!.ProductId.Should().Be(product.Id);
         variant.Name.Should().Be(cmd.Name);
         variant.Sku.Should().Be(cmd.Sku);
-        variant.IsActive.Should().BeTrue();
+        variant.Status.Should().Be("Active");
 
         ClearAuthHeader();
     }

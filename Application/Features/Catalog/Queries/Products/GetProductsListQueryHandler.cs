@@ -16,7 +16,7 @@ internal sealed class GetProductsListQueryHandler(
     public async Task<Result<PaginatedList<ProductDto>>> Handle(GetProductsListQuery request, CancellationToken cancellationToken)
     {
         var spec = new BaseSpecification<Product>(
-            request.IsActive.HasValue ? (p => p.IsActive == request.IsActive.Value) : null
+            request.Status.HasValue ? (p => p.Status == request.Status.Value) : null
         );
 
         if (!string.IsNullOrEmpty(request.SortBy))

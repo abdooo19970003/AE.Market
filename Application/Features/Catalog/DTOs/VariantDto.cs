@@ -6,7 +6,7 @@ public sealed record VariantDto
     public Guid ProductId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Sku { get; set; } = string.Empty;
-    public bool IsActive { get; set; }
+    public string Status { get; set; } = "Active";
     public decimal SalePrice { get; set; }
     public int StockQuantity { get; set; }
     public int ReservedQuantity { get; set; }

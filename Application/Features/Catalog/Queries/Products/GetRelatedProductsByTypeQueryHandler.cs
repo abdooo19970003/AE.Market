@@ -17,10 +17,10 @@ internal sealed class GetRelatedProductsByTypeQueryHandler(
         GetRelatedProductsByTypeQuery request,
         CancellationToken cancellationToken)
     {
-        var countSpec = new RelatedProductsByTypeSpec(request.ProductId, request.Type, request.IsActive);
+        var countSpec = new RelatedProductsByTypeSpec(request.ProductId, request.Type, request.Status);
         var totalCount = await repo.CountAsync(countSpec, cancellationToken);
 
-        var listSpec = new RelatedProductsByTypeSpec(request.ProductId, request.Type, request.Page, request.PageSize, request.IsActive);
+        var listSpec = new RelatedProductsByTypeSpec(request.ProductId, request.Type, request.Page, request.PageSize, request.Status);
         var products = await repo.ListWithSpecAsync(listSpec, cancellationToken);
 
         var dtos = mapper.Map<List<ProductDto>>(products);

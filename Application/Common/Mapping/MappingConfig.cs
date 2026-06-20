@@ -47,15 +47,18 @@ public static class MappingConfig
             .Map(dest => dest.Sku, src => src.Sku.Value)
             .Map(dest => dest.Slug, src => src.Slug.Value)
             .Map(dest => dest.ProductType, src => src.ProductType.ToString())
-            .Map(dest => dest.Url, src => src.Url.Value);
+            .Map(dest => dest.Url, src => src.Url.Value)
+            .Map(dest => dest.Status, src => src.Status.ToString());
 
         config.NewConfig<ProductVariant, VariantDto>()
-            .Map(dest => dest.Sku, src => src.Sku.Value);
+            .Map(dest => dest.Sku, src => src.Sku.Value)
+            .Map(dest => dest.Status, src => src.Status.ToString());
 
         config.NewConfig<Product, ProductDetailDto>()
             .Map(dest => dest.Sku, src => src.Sku.Value)
             .Map(dest => dest.ProductType, src => src.ProductType.ToString())
             .Map(dest => dest.Url, src => src.Url.Value)
+            .Map(dest => dest.Status, src => src.Status.ToString())
             .Map(dest => dest.Variants, src => src.Variants.Adapt<List<VariantDto>>())
             .Map(dest => dest.Images, src => src.Images.Select(i => i.Url).ToList());
 

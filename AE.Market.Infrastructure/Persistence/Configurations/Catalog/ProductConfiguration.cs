@@ -21,7 +21,7 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(x => x.Details).HasMaxLength(4000);
         builder.Property(x => x.ShortDescription).HasMaxLength(1000);
         builder.Property(x => x.LongDescription).HasMaxLength(4000);
-        builder.Property(x => x.IsActive).HasDefaultValue(true);
+        builder.Property(x => x.Status).HasConversion<int>().HasDefaultValue(ProductStatus.Active);
         builder.Property(x => x.AllowBackOrder).HasDefaultValue(false);
         builder.Property(x => x.ProductType).HasConversion<int>().IsRequired();
         builder.Property(x => x.MetaTitle).HasMaxLength(200);

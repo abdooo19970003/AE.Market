@@ -16,14 +16,14 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     public string Details { get; private set; }
     public string? ShortDescription { get; private set; }
     public string? LongDescription { get; private set; }
-    public bool IsActive { get; private set; } = true;
+    public ProductStatus Status { get; private set; } = ProductStatus.Active;
     public URL Url => URL.Create("products", Slug);
     public bool IsPurchasable =>
-        IsActive
+        Status == ProductStatus.Active
         && (
             ProductType is ProductType.Simple or ProductType.Digital
             || (ProductType == ProductType.Bundle && _bundleItems.Count > 0)
-            || _variants.Any(v => v.IsActive)
+            || _variants.Any(v => v.Status == ProductStatus.Active)
         );
 
     public Guid BrandId { get; private set; }
@@ -60,7 +60,7 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     public IReadOnlyCollection<ProductRelation> Relations => _relations.AsReadOnly();
 
     public decimal SalePrice =>
-        _variants.Where(v => v.IsActive && v.SalePrice > 0).Min(v => (decimal?)v.SalePrice) ?? 0m;
+        _variants.Where(v => v.Status == ProductStatus.Active && v.SalePrice > 0).Min(v => (decimal?)v.SalePrice) ?? 0m;
     public int StockQuantity => _variants.Sum(v => v.StockQuantity);
 
     // FOR Bundles
@@ -185,7 +185,7 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
 
     public void Activate(IReadOnlyCollection<Guid>? requiredAttributeIds = null)
     {
-        if (IsActive)
+        if (Status == ProductStatus.Active)
             return;
         if (ProductType is not (ProductType.Simple or ProductType.Digital or ProductType.Bundle) && _variants.Count == 0)
             throw new DomainException(
@@ -208,16 +208,16 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
                 CatalogErrors.ProductMissingRequiredAttributes.Code,
                 CatalogErrors.ProductMissingRequiredAttributes.Message
             );
-        IsActive = true;
+        Status = ProductStatus.Active;
         AddDomainEvent(new ProductActivatedDomainEvent(Id));
         UpdateLastModified();
     }
 
     public void Deactivate()
     {
-        if (!IsActive)
+        if (Status != ProductStatus.Active)
             return;
-        IsActive = false;
+        Status = ProductStatus.Suspended;
         AddDomainEvent(new ProductDeactivatedDomainEvent(Id));
         UpdateLastModified();
     }
@@ -233,7 +233,7 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
 
     public void RemoveVariant(ProductVariant variant)
     {
-        if (_variants.Count <= 1 && IsActive)
+        if (_variants.Count <= 1 && Status == ProductStatus.Active)
             throw new DomainException(
                 CatalogErrors.CannotRemoveLastVariant.Code,
                 CatalogErrors.CannotRemoveLastVariant.Message
@@ -599,7 +599,7 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
             attrVal.Delete();
         foreach (var bundleItem in _bundleItems)
             bundleItem.Delete();
-        IsActive = false;
+        Status = ProductStatus.Suspended;
         AddDomainEvent(new ProductDeletedDomainEvent(Id));
         base.Delete();
     }
@@ -622,7 +622,7 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
                 CatalogErrors.ProductMissingSuperAttributes.Code,
                 CatalogErrors.ProductMissingSuperAttributes.Message
             );
-        IsActive = true;
+        Status = ProductStatus.Active;
         base.Restore();
     }
 

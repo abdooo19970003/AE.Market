@@ -10,7 +10,7 @@ public sealed class ProductVariant : BaseEntity, IMetaData
 {
     public string Name { get; private set; } = string.Empty;
     public Sku Sku { get; private set; } = null!;
-    public bool IsActive { get; private set; } = true;
+    public ProductStatus Status { get; private set; } = ProductStatus.Active;
     public Guid ProductId { get; private set; }
 
     public decimal SalePrice { get; private set; }
@@ -57,14 +57,14 @@ public sealed class ProductVariant : BaseEntity, IMetaData
 
     internal void Activate(IReadOnlyCollection<Guid>? requiredAttributeIds = null)
     {
-        if (IsActive)
+        if (Status == ProductStatus.Active)
             return;
         if (requiredAttributeIds is not null && !HasAllRequiredAttributes(requiredAttributeIds))
             throw new DomainException(
                 CatalogErrors.VariantMissingRequiredAttributes.Code,
                 CatalogErrors.VariantMissingRequiredAttributes.Message
             );
-        IsActive = true;
+        Status = ProductStatus.Active;
         UpdateLastModified();
     }
 
@@ -90,9 +90,9 @@ public sealed class ProductVariant : BaseEntity, IMetaData
 
     internal void Deactivate()
     {
-        if (!IsActive)
+        if (Status != ProductStatus.Active)
             return;
-        IsActive = false;
+        Status = ProductStatus.Suspended;
         UpdateLastModified();
     }
 
@@ -237,13 +237,13 @@ public sealed class ProductVariant : BaseEntity, IMetaData
             image.Delete();
         foreach (var attrVal in _attributeValues)
             attrVal.Delete();
-        IsActive = false;
+        Status = ProductStatus.Suspended;
         base.Delete();
     }
 
     public override void Restore()
     {
-        IsActive = true;
+        Status = ProductStatus.Active;
         base.Restore();
     }
 

@@ -17,7 +17,7 @@ internal sealed class ProductVariantConfiguration : IEntityTypeConfiguration<Pro
             .HasConversion(v => v.Value, v => Sku.Create(v))
             .HasMaxLength(50)
             .IsRequired();
-        builder.Property(x => x.IsActive).HasDefaultValue(true);
+        builder.Property(x => x.Status).HasConversion<int>().HasDefaultValue(ProductStatus.Active);
         builder.Property(x => x.SalePrice).HasPrecision(18, 4);
         builder.Property(x => x.StockQuantity).HasDefaultValue(0);
         builder.Property(x => x.ReservedQuantity).HasDefaultValue(0);

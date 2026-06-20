@@ -1,17 +1,18 @@
 using AE.Market.Domain.Aggregates.Catalog.Products;
+using AE.Market.Domain.Aggregates.Catalog.ValueObjects;
 using AE.Market.Domain.Common.Specifications;
 
 namespace AE.Market.Application.Features.Catalog.Specs;
 
 public sealed class ProductsByBrandSpec : BaseSpecification<Product>
 {
-    public ProductsByBrandSpec(Guid brandId, bool? isActive = null)
-        : base(p => p.BrandId == brandId && (isActive == null || p.IsActive == isActive))
+    public ProductsByBrandSpec(Guid brandId, ProductStatus? status = null)
+        : base(p => p.BrandId == brandId && (status == null || p.Status == status))
     {
     }
 
-    public ProductsByBrandSpec(Guid brandId, int page, int pageSize, bool? isActive = null, string? sortBy = null, bool sortDescending = false)
-        : base(p => p.BrandId == brandId && (isActive == null || p.IsActive == isActive))
+    public ProductsByBrandSpec(Guid brandId, int page, int pageSize, ProductStatus? status = null, string? sortBy = null, bool sortDescending = false)
+        : base(p => p.BrandId == brandId && (status == null || p.Status == status))
     {
         SetPagination((page - 1) * pageSize, pageSize);
 

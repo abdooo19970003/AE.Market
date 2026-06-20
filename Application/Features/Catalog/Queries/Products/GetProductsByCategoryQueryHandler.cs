@@ -15,10 +15,10 @@ internal sealed class GetProductsByCategoryQueryHandler(
 {
     public async Task<Result<PaginatedList<ProductDto>>> Handle(GetProductsByCategoryQuery request, CancellationToken cancellationToken)
     {
-        var countSpec = new ProductsByCategorySpec(request.CategoryId, request.IsActive);
+        var countSpec = new ProductsByCategorySpec(request.CategoryId, request.Status);
         var totalCount = await repo.CountAsync(countSpec, cancellationToken);
 
-        var listSpec = new ProductsByCategorySpec(request.CategoryId, request.Page, request.PageSize, request.IsActive, request.SortBy, request.SortDescending);
+        var listSpec = new ProductsByCategorySpec(request.CategoryId, request.Page, request.PageSize, request.Status, request.SortBy, request.SortDescending);
         var products = await repo.ListWithSpecAsync(listSpec, cancellationToken);
         var dtos = mapper.Map<List<ProductDto>>(products);
 

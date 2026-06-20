@@ -1,18 +1,25 @@
+using System.Linq.Expressions;
 using AE.Market.Domain.Aggregates.Catalog.Products;
+using AE.Market.Domain.Aggregates.Catalog.ValueObjects;
 using AE.Market.Domain.Common.Specifications;
 
 namespace AE.Market.Application.Features.Catalog.Specs;
 
-public sealed class ProductBySlugSpec(string slug) : BaseSpecification<Product>(p => p.Slug.Value == slug)
+public sealed class ProductBySlugSpec : BaseSpecification<Product>
 {
-    public ProductBySlugSpec(string slug, bool includeChildren) : this(slug)
+    private ProductBySlugSpec(Expression<Func<Product, bool>> criteria) : base(criteria) { }
+
+    public static ProductBySlugSpec Create(string slug, bool includeChildren = false)
     {
+        var slugObj = Slug.Create(slug);
+        var spec = new ProductBySlugSpec(p => p.Slug == slugObj);
         if (includeChildren)
         {
-            AddInclude(p => p.Variants);
-            AddInclude(p => p.Images);
-            AddInclude(p => p.Tags);
-            AddInclude(p => p.AttributeValues);
+            spec.AddInclude(p => p.Variants);
+            spec.AddInclude(p => p.Images);
+            spec.AddInclude(p => p.Tags);
+            spec.AddInclude(p => p.AttributeValues);
         }
+        return spec;
     }
 }

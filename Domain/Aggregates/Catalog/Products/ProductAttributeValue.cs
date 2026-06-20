@@ -91,6 +91,12 @@ public sealed class ProductAttributeValue : BaseEntity
         );
     }
 
+    internal void UpdateIsVariantDefiner(bool isVariantDefiner)
+    {
+        IsVariantDefiner = isVariantDefiner;
+        UpdateLastModified();
+    }
+
     internal void UpdateValue(
         AttributeInputType inputType,
         string? textValue = null,

@@ -297,6 +297,7 @@ public sealed class ProductTests
         {
             var product = CreateValidProduct();
             product.AddVariant(Guid.NewGuid(), "Default", "SKU-DEF-001");
+            product.SetAttributeValue(Guid.NewGuid(), Guid.NewGuid(), AttributeInputType.Text, true, "Color");
             product.Deactivate();
 
             product.Activate();
@@ -386,6 +387,7 @@ public sealed class ProductTests
             var product = Product.Create(
                 Guid.NewGuid(), "Test", "test", "SKU-001", Guid.NewGuid(), ProductType.Configurable);
             product.AddVariant(Guid.NewGuid(), "Default", "SKU-DEF-001");
+            product.SetAttributeValue(Guid.NewGuid(), Guid.NewGuid(), AttributeInputType.Text, true, "Color");
             product.Deactivate();
 
             product.Activate();
@@ -402,6 +404,8 @@ public sealed class ProductTests
             var product = CreateValidProduct();
             product.AddVariant(Guid.NewGuid(), "Default", "SKU-DEF-001");
             product.Delete();
+            // Re-establish super-attribute after delete cascade clears them
+            product.SetAttributeValue(Guid.NewGuid(), Guid.NewGuid(), AttributeInputType.Text, true, "Color");
 
             product.Restore();
 
@@ -1090,15 +1094,10 @@ public sealed class ProductTests
             var product = CreateValidProduct();
             product.AddVariant(Guid.NewGuid(), "Default", "SKU-DEF-001");
 
-            var setMethod = typeof(Product).GetMethod("SetAttributeValue",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
-            _ = setMethod.Invoke(product, [Guid.NewGuid(), Guid.NewGuid(), AttributeInputType.Text, null, "Red", null, null, null, null, null]);
+            var attributeValue = product.SetAttributeValue(
+                Guid.NewGuid(), Guid.NewGuid(), AttributeInputType.Text, null, "Red");
 
-            var attributeValue = product.AttributeValues.Should().ContainSingle().Subject;
-
-            var removeMethod = typeof(Product).GetMethod("RemoveAttributeValue",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
-            removeMethod.Invoke(product, [attributeValue]);
+            product.RemoveAttributeValue(attributeValue);
 
             product.AttributeValues.Should().BeEmpty();
             attributeValue.IsDeleted.Should().BeTrue();
@@ -1221,12 +1220,8 @@ public sealed class ProductTests
             var attrId2 = Guid.NewGuid();
             var requiredIds = new List<Guid> { attrId1, attrId2 };
 
-            typeof(Product).GetMethod("SetAttributeValue",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-                .Invoke(product, [Guid.NewGuid(), attrId1, AttributeInputType.Text, null, "Red", null, null, null, null, null]);
-            typeof(Product).GetMethod("SetAttributeValue",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-                .Invoke(product, [Guid.NewGuid(), attrId2, AttributeInputType.Integer, null, null, 42, null, null, null, null]);
+            product.SetAttributeValue(Guid.NewGuid(), attrId1, AttributeInputType.Text, null, "Red");
+            product.SetAttributeValue(Guid.NewGuid(), attrId2, AttributeInputType.Integer, null, null, 42);
 
             var result = product.GetMissingRequiredAttributeIds(requiredIds);
 
@@ -1242,9 +1237,7 @@ public sealed class ProductTests
             var missingId = Guid.NewGuid();
             var requiredIds = new List<Guid> { presentId, missingId };
 
-            typeof(Product).GetMethod("SetAttributeValue",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-                .Invoke(product, [Guid.NewGuid(), presentId, AttributeInputType.Text, null, "Red", null, null, null, null, null]);
+            product.SetAttributeValue(Guid.NewGuid(), presentId, AttributeInputType.Text, null, "Red");
 
             var result = product.GetMissingRequiredAttributeIds(requiredIds);
 
@@ -1259,9 +1252,7 @@ public sealed class ProductTests
             product.AddVariant(Guid.NewGuid(), "Default", "SKU-DEF-001");
             var attrId = Guid.NewGuid();
 
-            typeof(Product).GetMethod("SetAttributeValue",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-                .Invoke(product, [Guid.NewGuid(), attrId, AttributeInputType.Text, null, "Red", null, null, null, null, null]);
+            product.SetAttributeValue(Guid.NewGuid(), attrId, AttributeInputType.Text, null, "Red");
 
             product.HasAllRequiredAttributes(new List<Guid> { attrId }).Should().BeTrue();
         }

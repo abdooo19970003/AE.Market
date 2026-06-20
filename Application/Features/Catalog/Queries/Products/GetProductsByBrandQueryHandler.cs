@@ -24,7 +24,7 @@ internal sealed class GetProductsByBrandQueryHandler(
 
         var result = new PaginatedList<ProductDto>
         {
-            Items = dtos,
+                Items = dtos,
             Page = request.Page,
             PageSize = request.PageSize,
             TotalCount = totalCount

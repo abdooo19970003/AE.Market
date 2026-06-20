@@ -2,6 +2,34 @@ namespace AE.Market.Application.Features.Catalog;
 
 internal static class CacheKeys
 {
+    // AttributeGroups
+    internal static string AttributeGroupById(Guid id) => $"attributegroup-{id}";
+    internal static string AttributeGroupsList => "attributegroups-list";
+
+    // Attributes
+    internal static string CategoryAttributeById(Guid id) => $"categoryattribute-{id}";
+    internal static string CategoryAttributesList => "categoryattributes-list";
+
+    // BundleItems
+    internal static string BundleItemById(Guid id) => $"bundleitem-{id}";
+    internal static string BundleItemsList => "bundleitems-list";
+
+    // ProductImages
+    internal static string ProductImageById(Guid id) => $"productimage-{id}";
+    internal static string ProductImagesList => "productimages-list";
+
+    // ProductRelations
+    internal static string ProductRelationById(Guid id) => $"productrelation-{id}";
+    internal static string ProductRelationsList => "productrelations-list";
+
+    // Tags
+    internal static string TagById(Guid id) => $"tag-{id}";
+    internal static string TagsList => "tags-list";
+
+    // Units
+    internal static string UnitById(Guid id) => $"unit-{id}";
+    internal static string UnitsList => "units-list";
+
     // Products
     internal static string ProductById(Guid id) => $"product-{id}";
     internal static string ProductBySlug(string slug) => $"product-slug-{slug}";

@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["dotnet"],
+  "plugin": ["dotnet", ".opencode/plugins/graphify.js"],
   "agent": {
     "api-contract-checker": {
       "mode": "subagent",
@@ -71,5 +71,6 @@
         "task": "deny"
       }
     }
-  }
+  },
+  "lsp": {}
 }

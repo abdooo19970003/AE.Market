@@ -16,6 +16,8 @@ internal sealed class CategoryAttributeConfiguration : IEntityTypeConfiguration<
         builder.Property(x => x.Slug)
             .HasConversion(v => v == null ? null : v.Value, v => v == null ? null : Slug.Create(v))
             .HasMaxLength(300);
+
+        builder.HasIndex(x => x.Slug).IsUnique();
         builder.Property(x => x.InputType).HasConversion<int>().IsRequired();
         builder.Property(x => x.IsRequired).HasDefaultValue(false);
         builder.Property(x => x.IsFilterable).HasDefaultValue(false);

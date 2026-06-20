@@ -18,5 +18,7 @@ internal sealed class TagConfiguration : IEntityTypeConfiguration<Tag>
             .HasConversion(v => v.Value, v => Slug.Create(v))
             .HasMaxLength(300)
             .IsRequired();
+
+        builder.HasIndex(x => x.Slug).IsUnique();
     }
 }

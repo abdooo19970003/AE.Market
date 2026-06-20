@@ -1,4 +1,5 @@
 using AE.Market.Application.Common.Interfaces;
+using AE.Market.Application.Features.Catalog.Specs;
 using AE.Market.Domain.Aggregates.Catalog.Errors;
 using AE.Market.Domain.Aggregates.Catalog.Products;
 using AE.Market.Domain.Common.Abstracts;
@@ -12,7 +13,7 @@ internal sealed class RemoveProductVariantCommandHandler(
 {
     public async Task<Result> Handle(RemoveProductVariantCommand request, CancellationToken cancellationToken)
     {
-        var product = await repo.GetByIdWithTrackingAsync(request.ProductId, cancellationToken);
+        var product = await repo.GetBySpecWithTrackingAsync(new ProductByIdSpec(request.ProductId, includeChildren: true), cancellationToken);
         if (product is null)
             return Result.Fail(CatalogErrors.ProductNotFound);
 
@@ -21,7 +22,6 @@ internal sealed class RemoveProductVariantCommandHandler(
             return Result.Fail(CatalogErrors.VariantNotFound);
 
         product.RemoveVariant(variant);
-        repo.Update(product);
         return Result.Success();
     }
 }

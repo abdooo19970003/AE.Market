@@ -5,8 +5,10 @@ using AE.Market.Application.Features.Catalog.Commands.AddProductVariant;
 using AE.Market.Application.Features.Catalog.Commands.CreateProduct;
 using AE.Market.Application.Features.Catalog.Commands.DeleteProduct;
 using AE.Market.Application.Features.Catalog.Commands.ReleaseVariantStock;
+using AE.Market.Application.Features.Catalog.Commands.RemoveProductAttribute;
 using AE.Market.Application.Features.Catalog.Commands.RemoveProductVariant;
 using AE.Market.Application.Features.Catalog.Commands.ReserveVariantStock;
+using AE.Market.Application.Features.Catalog.Commands.SetProductAttributeValue;
 using AE.Market.Application.Features.Catalog.Commands.UpdateProduct;
 using AE.Market.Application.Features.Catalog.Commands.UpdateVariantPricing;
 using AE.Market.Application.Features.Catalog.Commands.UpdateVariantStock;
@@ -159,5 +161,25 @@ public sealed class ProductsController(IMediator mediator) : ControllerBase
             return BadRequest("Id mismatch");
         var result = await mediator.Send(cmd, ct);
         return result.ToActionResult();
+    }
+
+    [HttpPost("{productId:guid}/attributes")]
+    [Authorize]
+    [HasPermission(Permission.MutateProducts)]
+    public async Task<IActionResult> SetProductAttribute(Guid productId, [FromBody] SetProductAttributeValueCommand cmd, CancellationToken ct)
+    {
+        if (productId != cmd.ProductId)
+            return BadRequest("ProductId mismatch");
+        var result = await mediator.Send(cmd, ct);
+        return result.ToActionResult();
+    }
+
+    [HttpDelete("{productId:guid}/attributes/{attributeValueId:guid}")]
+    [Authorize]
+    [HasPermission(Permission.MutateProducts)]
+    public async Task<IActionResult> RemoveProductAttribute(Guid productId, Guid attributeValueId, CancellationToken ct)
+    {
+        var result = await mediator.Send(new RemoveProductAttributeCommand(productId, attributeValueId), ct);
+        return result.ToDeletedActionResult();
     }
 }

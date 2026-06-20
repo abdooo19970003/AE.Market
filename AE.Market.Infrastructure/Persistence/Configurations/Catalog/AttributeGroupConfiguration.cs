@@ -14,8 +14,10 @@ internal sealed class AttributeGroupConfiguration : IEntityTypeConfiguration<Att
 
         builder.Property(x => x.GroupName).HasMaxLength(200).IsRequired();
         builder.Property(x => x.Slug)
-            .HasConversion(v => v!.Value, v => Slug.Create(v))
+            .HasConversion(v => v == null ? null : v.Value, v => v == null ? null : Slug.Create(v))
             .HasMaxLength(300);
+
+        builder.HasIndex(x => x.Slug).IsUnique();
         builder.Property(x => x.SortOrder).HasDefaultValue(0);
     }
 }

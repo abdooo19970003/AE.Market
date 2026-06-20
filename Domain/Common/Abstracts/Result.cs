@@ -1,8 +1,11 @@
-﻿namespace AE.Market.Domain.Common.Abstracts
+﻿using System.Text.Json.Serialization;
+
+namespace AE.Market.Domain.Common.Abstracts
 {
     public class Result 
     {
         public bool IsSuccess { get; }
+        [JsonIgnore]
         public bool IsFailure => !IsSuccess;
         public IEnumerable<Error>? Errors { get; }
         public Error Error { get; }
@@ -36,6 +39,7 @@
         {
             _value = value;
         }
+        [JsonConstructor]
         protected Result(T? value, bool isSuccess, Error error, IEnumerable<Error>? errors) : base(isSuccess, error,errors)
         {
             _value = value;

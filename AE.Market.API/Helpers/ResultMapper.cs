@@ -83,9 +83,9 @@ namespace AE.Market.API.Helpers
             if (error.Code.Contains("AlreadyExist", StringComparison.OrdinalIgnoreCase) ||
                 error.Code.Contains("Conflict", StringComparison.OrdinalIgnoreCase))
                 return StatusCodes.Status409Conflict;
-            if (error.Code.StartsWith("Application.Validation", StringComparison.OrdinalIgnoreCase))
+            if (error.Code.StartsWith("Application.Validation.", StringComparison.OrdinalIgnoreCase))
                 return StatusCodes.Status400BadRequest;
-            if (error.Code.StartsWith("Application.", StringComparison.OrdinalIgnoreCase))
+            if (error.Code.StartsWith("Application.Internal.", StringComparison.OrdinalIgnoreCase))
                 return StatusCodes.Status500InternalServerError;
 
             return StatusCodes.Status400BadRequest;

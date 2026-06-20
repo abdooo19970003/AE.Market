@@ -2,6 +2,7 @@ using AE.Market.Application.Features.Auth.DTOs;
 using AE.Market.Application.Features.Catalog.DTOs;
 using AE.Market.Domain.Aggregates.Auth;
 using AE.Market.Domain.Aggregates.Catalog;
+using AE.Market.Domain.Aggregates.Catalog.Attributes;
 using AE.Market.Domain.Aggregates.Catalog.Products;
 using AE.Market.Domain.Aggregates.Catalog.Products.Variants;
 using AE.Market.Domain.Aggregates.Catalog.Units;
@@ -57,6 +58,28 @@ public static class MappingConfig
             .Map(dest => dest.Url, src => src.Url.Value)
             .Map(dest => dest.Variants, src => src.Variants.Adapt<List<VariantDto>>())
             .Map(dest => dest.Images, src => src.Images.Select(i => i.Url).ToList());
+
+        config.NewConfig<Tag, TagDto>()
+            .Map(dest => dest.Slug, src => src.Slug.Value);
+
+        config.NewConfig<ProductImage, ProductImageDto>();
+
+        config.NewConfig<ProductRelation, ProductRelationDto>()
+            .Map(dest => dest.Type, src => src.Type.ToString());
+
+        config.NewConfig<BundleItem, BundleItemDto>()
+            .Map(dest => dest.ItemName, src => src.Item == null ? null : src.Item.Name);
+
+        config.NewConfig<AttributeOption, AttributeOptionDto>();
+
+        config.NewConfig<CategoryAttribute, CategoryAttributeDto>()
+            .Map(dest => dest.Slug, src => src.Slug == null ? null : src.Slug.Value)
+            .Map(dest => dest.InputType, src => src.InputType.ToString())
+            .Map(dest => dest.Options, src => src.Options.Adapt<List<AttributeOptionDto>>());
+
+        config.NewConfig<AttributeGroup, AttributeGroupDto>()
+            .Map(dest => dest.Slug, src => src.Slug == null ? null : src.Slug.Value)
+            .Map(dest => dest.AttributeIds, src => src.AttributeIds.ToList());
 
         config.Compile();
         return config;

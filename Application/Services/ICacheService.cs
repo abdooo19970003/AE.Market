@@ -18,5 +18,6 @@
             CancellationToken cancellationToken = default
         );
         Task RemoveAsync(string key, CancellationToken cancellationToken);
+        Task ClearAsync(bool allowFailSafe, CancellationToken cancellationToken);
     }
 }

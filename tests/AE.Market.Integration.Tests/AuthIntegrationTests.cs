@@ -5,8 +5,8 @@ using FluentAssertions;
 
 namespace AE.Market.Integration.Tests;
 
+[Collection("Integration tests")]
 public sealed class AuthIntegrationTests(IntegrationTestWebAppFactory factory)
-    : IClassFixture<IntegrationTestWebAppFactory>
 {
     private readonly HttpClient _client = factory.HttpClient;
     private const string BasePath = "api/auth";

@@ -30,8 +30,6 @@ internal sealed class UpdateProductCommandHandler(
         product.SetShortDescription(request.ShortDescription);
         product.SetLongDescription(request.LongDescription);
 
-        repo.Update(product);
-
         var dto = mapper.Map<ProductDto>(product);
         return Result<ProductDto>.Success(dto);
     }

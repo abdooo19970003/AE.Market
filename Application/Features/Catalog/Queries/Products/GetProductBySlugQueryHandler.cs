@@ -19,7 +19,7 @@ internal sealed class GetProductBySlugQueryHandler(
 {
     public async Task<Result<ProductDetailDto>> Handle(GetProductBySlugQuery request, CancellationToken cancellationToken)
     {
-        var spec = new ProductBySlugSpec(request.Slug, request.IncludeChildren);
+        var spec = ProductBySlugSpec.Create(request.Slug, request.IncludeChildren);
         var product = await repo.FirstOrDefaultAsync(spec, cancellationToken);
         if (product is null)
             return Result<ProductDetailDto>.Fail(CatalogErrors.ProductNotFound);

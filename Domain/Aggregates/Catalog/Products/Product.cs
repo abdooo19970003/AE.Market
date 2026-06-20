@@ -139,6 +139,12 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
 
     public void UpdateProductType(ProductType type)
     {
+        if (type == ProductType.Configurable
+            && !_attributeValues.Any(av => !av.IsDeleted && av.IsVariantDefiner))
+            throw new DomainException(
+                CatalogErrors.ProductTypeRequiresSuperAttributes.Code,
+                CatalogErrors.ProductTypeRequiresSuperAttributes.Message
+            );
         var oldType = ProductType;
         ProductType = type;
         AddDomainEvent(new ProductTypeChangedDomainEvent(Id, oldType, type));
@@ -190,6 +196,12 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
             throw new DomainException(
                 CatalogErrors.BundleProductHasNoItems.Code,
                 CatalogErrors.BundleProductHasNoItems.Message
+            );
+        if (ProductType == ProductType.Configurable
+            && !_attributeValues.Any(av => !av.IsDeleted && av.IsVariantDefiner))
+            throw new DomainException(
+                CatalogErrors.ProductMissingSuperAttributes.Code,
+                CatalogErrors.ProductMissingSuperAttributes.Message
             );
         IsActive = true;
         AddDomainEvent(new ProductActivatedDomainEvent(Id));
@@ -422,7 +434,7 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
         UpdateLastModified();
     }
 
-    internal ProductAttributeValue SetAttributeValue(
+    public ProductAttributeValue SetAttributeValue(
         Guid valueId,
         Guid attributeId,
         AttributeInputType inputType,
@@ -447,8 +459,38 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
                 dateTimeValue,
                 optionId
             );
+
+            if (isVariantDefiner.HasValue && isVariantDefiner.Value != existing.IsVariantDefiner)
+            {
+                if (isVariantDefiner.Value)
+                {
+                    if (ProductType != ProductType.Configurable)
+                        throw new DomainException(
+                            CatalogErrors.SuperAttributeNotAllowedForProductType.Code,
+                            CatalogErrors.SuperAttributeNotAllowedForProductType.Message
+                        );
+                }
+                else
+                {
+                    if (ProductType == ProductType.Configurable
+                        && _attributeValues.Count(av => !av.IsDeleted && av.IsVariantDefiner && av.AttributeId != attributeId) == 0)
+                        throw new DomainException(
+                            CatalogErrors.CannotRemoveLastSuperAttribute.Code,
+                            CatalogErrors.CannotRemoveLastSuperAttribute.Message
+                        );
+                }
+                existing.UpdateIsVariantDefiner(isVariantDefiner.Value);
+            }
+
+            UpdateLastModified();
             return existing;
         }
+
+        if (isVariantDefiner == true && ProductType != ProductType.Configurable)
+            throw new DomainException(
+                CatalogErrors.SuperAttributeNotAllowedForProductType.Code,
+                CatalogErrors.SuperAttributeNotAllowedForProductType.Message
+            );
 
         var value = ProductAttributeValue.Create(
             valueId,
@@ -469,8 +511,15 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
         return value;
     }
 
-    internal void RemoveAttributeValue(ProductAttributeValue value)
+    public void RemoveAttributeValue(ProductAttributeValue value)
     {
+        if (value.IsVariantDefiner
+            && ProductType == ProductType.Configurable
+            && _attributeValues.Count(av => !av.IsDeleted && av.IsVariantDefiner && av.AttributeId != value.AttributeId) == 0)
+            throw new DomainException(
+                CatalogErrors.CannotRemoveLastSuperAttribute.Code,
+                CatalogErrors.CannotRemoveLastSuperAttribute.Message
+            );
         value.Delete();
         _attributeValues.Remove(value);
         UpdateLastModified();
@@ -526,6 +575,12 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
             throw new DomainException(
                 CatalogErrors.BundleProductHasNoItems.Code,
                 CatalogErrors.BundleProductHasNoItems.Message
+            );
+        if (ProductType == ProductType.Configurable
+            && !_attributeValues.Any(av => !av.IsDeleted && av.IsVariantDefiner))
+            throw new DomainException(
+                CatalogErrors.ProductMissingSuperAttributes.Code,
+                CatalogErrors.ProductMissingSuperAttributes.Message
             );
         IsActive = true;
         base.Restore();

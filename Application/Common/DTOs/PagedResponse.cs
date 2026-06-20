@@ -2,20 +2,12 @@
 
 namespace AE.Market.Application.Common.DTOs
 {
-    public class PagedResponse<T> 
+    public class PagedResponse<T>(IReadOnlyList<T>? data, int pageNumber, int pageSize, int totalRecords)
     {
-        public PagedResponse(IReadOnlyList<T>? data, int pageNumber, int pageSize, int totalRecords)
-        {
-            Data = data;
-            PageNumber = pageNumber;
-            PageSize = pageSize;
-            TotalRecords = totalRecords;
-        }
-
-        public IReadOnlyList<T>? Data { get; init; }
-        public int PageNumber { get; init; }
-        public int PageSize { get; init; }
-        public int TotalRecords { get; init; }
+        public IReadOnlyList<T>? Data { get; init; } = data;
+        public int PageNumber { get; init; } = pageNumber;
+        public int PageSize { get; init; } = pageSize;
+        public int TotalRecords { get; init; } = totalRecords;
         public int TotalPages => (int) Math.Ceiling((decimal)(TotalRecords / PageSize)); 
         public bool HasNextPage => PageNumber < TotalPages;
         public bool HasPreviousPage => PageNumber > 1;

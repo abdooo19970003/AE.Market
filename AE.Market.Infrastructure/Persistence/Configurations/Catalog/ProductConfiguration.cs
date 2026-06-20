@@ -38,6 +38,7 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Ignore(x => x.StockQuantity);
 
         builder.HasIndex(x => x.Slug).IsUnique();
+        builder.HasIndex(x => x.Sku).IsUnique();
 
         builder.HasMany(x => x.Variants)
             .WithOne()

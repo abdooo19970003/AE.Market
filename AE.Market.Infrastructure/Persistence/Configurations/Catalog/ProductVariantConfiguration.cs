@@ -22,6 +22,7 @@ internal sealed class ProductVariantConfiguration : IEntityTypeConfiguration<Pro
         builder.Property(x => x.StockQuantity).HasDefaultValue(0);
         builder.Property(x => x.ReservedQuantity).HasDefaultValue(0);
         builder.Property(x => x.RowVersion).HasColumnType("bytea");
+        builder.HasIndex(x => x.Sku).IsUnique();
 
         builder.HasMany(x => x.AttributeValues)
             .WithOne()

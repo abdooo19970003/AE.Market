@@ -44,6 +44,11 @@ public static class CatalogErrors
         "The specified variant was not found."
     );
 
+    public static readonly Error ProductSkuAlreadyExists = new(
+        "Application.Conflict.Product.SkuAlreadyExists",
+        "A product with this SKU already exists."
+    );
+
     public static readonly Error VariantSkuAlreadyExists = new(
         "Application.Conflict.Variant.SkuAlreadyExists",
         "A variant with this SKU already exists."

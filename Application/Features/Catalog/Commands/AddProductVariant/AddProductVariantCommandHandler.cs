@@ -5,7 +5,9 @@ using AE.Market.Application.Features.Catalog.Specs;
 using AE.Market.Domain.Aggregates.Catalog.Errors;
 using AE.Market.Domain.Aggregates.Catalog.Products;
 using AE.Market.Domain.Aggregates.Catalog.Products.Variants;
+using AE.Market.Domain.Aggregates.Catalog.ValueObjects;
 using AE.Market.Domain.Common.Abstracts;
+using AE.Market.Domain.Common.Specifications;
 using MediatR;
 
 namespace AE.Market.Application.Features.Catalog.Commands.AddProductVariant;
@@ -18,6 +20,17 @@ internal sealed class AddProductVariantCommandHandler(
 {
     public async Task<Result<VariantDto>> Handle(AddProductVariantCommand request, CancellationToken cancellationToken)
     {
+        var sku = Sku.Create(request.Sku);
+        var existingProduct = await repo.AnyAsync(
+            new BaseSpecification<Product>(p => p.Sku == sku), cancellationToken);
+        if (existingProduct)
+            return Result<VariantDto>.Fail(CatalogErrors.VariantSkuAlreadyExists);
+
+        var existingVariant = await variantRepo.AnyAsync(
+            new BaseSpecification<ProductVariant>(v => v.Sku == sku), cancellationToken);
+        if (existingVariant)
+            return Result<VariantDto>.Fail(CatalogErrors.VariantSkuAlreadyExists);
+
         var spec = new ProductByIdSpec(request.ProductId, includeChildren: true);
         var product = await repo.GetBySpecWithTrackingAsync(spec, cancellationToken);
         if (product is null)

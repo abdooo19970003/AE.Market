@@ -53,6 +53,25 @@ internal sealed class CreateProductCommandHandler(
         product.SetShortDescription(request.ShortDescription);
         product.SetLongDescription(request.LongDescription);
 
+        if (request.AttributeValues is not null)
+        {
+            foreach (var attr in request.AttributeValues)
+            {
+                product.SetAttributeValue(
+                    Guid.NewGuid(),
+                    attr.AttributeId,
+                    attr.InputType,
+                    attr.IsVariantDefiner,
+                    attr.ValueText,
+                    attr.ValueInteger,
+                    attr.ValueDecimal,
+                    attr.ValueBoolean,
+                    attr.ValueDateTime,
+                    attr.OptionId
+                );
+            }
+        }
+
         await repo.AddAsync(product, cancellationToken);
 
         var dto = mapper.Map<ProductDto>(product);

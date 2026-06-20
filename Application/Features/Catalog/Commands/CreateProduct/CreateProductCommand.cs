@@ -15,5 +15,6 @@ public sealed record CreateProductCommand(
     Guid TaxCodeId,
     string ProductType,
     bool AllowBackOrder,
-    int? BackOrderLimit
+    int? BackOrderLimit,
+    IReadOnlyCollection<AttributeValueDto>? AttributeValues = null
 ) : ICommand<ProductDto>;

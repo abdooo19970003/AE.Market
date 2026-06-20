@@ -439,6 +439,41 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
         UpdateLastModified();
     }
 
+    public ProductAttributeValue SetVariantAttributeValue(
+        Guid variantId,
+        Guid valueId,
+        Guid attributeId,
+        AttributeInputType inputType,
+        string? textValue = null,
+        int? integerValue = null,
+        decimal? decimalValue = null,
+        bool? booleanValue = null,
+        DateTime? dateTimeValue = null,
+        Guid? optionId = null
+    )
+    {
+        var variant = _variants.FirstOrDefault(v => v.Id == variantId)
+            ?? throw new DomainException(
+                CatalogErrors.VariantNotFound.Code,
+                CatalogErrors.VariantNotFound.Message
+            );
+
+        var result = variant.SetAttributeValue(
+            valueId,
+            attributeId,
+            inputType,
+            textValue,
+            integerValue,
+            decimalValue,
+            booleanValue,
+            dateTimeValue,
+            optionId
+        );
+
+        UpdateLastModified();
+        return result;
+    }
+
     public ProductAttributeValue SetAttributeValue(
         Guid valueId,
         Guid attributeId,

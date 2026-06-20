@@ -9,6 +9,9 @@ using AE.Market.Application.Features.Catalog.Commands.RemoveProductAttribute;
 using AE.Market.Application.Features.Catalog.Commands.RemoveProductVariant;
 using AE.Market.Application.Features.Catalog.Commands.ReserveVariantStock;
 using AE.Market.Application.Features.Catalog.Commands.SetProductAttributeValue;
+using AE.Market.Application.Features.Catalog.Commands.SetProductAttributeValues;
+using AE.Market.Application.Features.Catalog.Commands.SetVariantAttributeValue;
+using AE.Market.Application.Features.Catalog.Commands.SetVariantAttributeValues;
 using AE.Market.Application.Features.Catalog.Commands.UpdateProduct;
 using AE.Market.Application.Features.Catalog.Commands.UpdateVariantPricing;
 using AE.Market.Application.Features.Catalog.Commands.UpdateVariantStock;
@@ -181,5 +184,38 @@ public sealed class ProductsController(IMediator mediator) : ControllerBase
     {
         var result = await mediator.Send(new RemoveProductAttributeCommand(productId, attributeValueId), ct);
         return result.ToDeletedActionResult();
+    }
+
+    [HttpPut("{productId:guid}/attributes")]
+    [Authorize]
+    [HasPermission(Permission.MutateProducts)]
+    public async Task<IActionResult> SetProductAttributeValues(Guid productId, [FromBody] SetProductAttributeValuesCommand cmd, CancellationToken ct)
+    {
+        if (productId != cmd.ProductId)
+            return BadRequest("ProductId mismatch");
+        var result = await mediator.Send(cmd, ct);
+        return result.ToActionResult();
+    }
+
+    [HttpPost("{productId:guid}/variants/{variantId:guid}/attributes")]
+    [Authorize]
+    [HasPermission(Permission.MutateProducts)]
+    public async Task<IActionResult> SetVariantAttributeValue(Guid productId, Guid variantId, [FromBody] SetVariantAttributeValueCommand cmd, CancellationToken ct)
+    {
+        if (productId != cmd.ProductId || variantId != cmd.VariantId)
+            return BadRequest("Id mismatch");
+        var result = await mediator.Send(cmd, ct);
+        return result.ToActionResult();
+    }
+
+    [HttpPut("{productId:guid}/variants/{variantId:guid}/attributes")]
+    [Authorize]
+    [HasPermission(Permission.MutateProducts)]
+    public async Task<IActionResult> SetVariantAttributeValues(Guid productId, Guid variantId, [FromBody] SetVariantAttributeValuesCommand cmd, CancellationToken ct)
+    {
+        if (productId != cmd.ProductId || variantId != cmd.VariantId)
+            return BadRequest("Id mismatch");
+        var result = await mediator.Send(cmd, ct);
+        return result.ToActionResult();
     }
 }

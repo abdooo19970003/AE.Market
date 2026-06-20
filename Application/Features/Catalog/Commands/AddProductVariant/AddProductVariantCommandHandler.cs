@@ -37,6 +37,26 @@ internal sealed class AddProductVariantCommandHandler(
             return Result<VariantDto>.Fail(CatalogErrors.ProductNotFound);
 
         var variant = product.AddVariant(Guid.NewGuid(), request.Name, request.Sku);
+
+        if (request.AttributeValues is not null)
+        {
+            foreach (var attr in request.AttributeValues)
+            {
+                product.SetVariantAttributeValue(
+                    variant.Id,
+                    Guid.NewGuid(),
+                    attr.AttributeId,
+                    attr.InputType,
+                    attr.ValueText,
+                    attr.ValueInteger,
+                    attr.ValueDecimal,
+                    attr.ValueBoolean,
+                    attr.ValueDateTime,
+                    attr.OptionId
+                );
+            }
+        }
+
         await variantRepo.AddAsync(variant, cancellationToken);
 
         var dto = mapper.Map<VariantDto>(variant);

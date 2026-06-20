@@ -1,6 +1,7 @@
 using AE.Market.Application.Common.Interfaces;
 using AE.Market.Application.Common.Mapping;
 using AE.Market.Application.Features.Catalog.DTOs;
+using AE.Market.Domain.Aggregates.Catalog;
 using AE.Market.Domain.Aggregates.Catalog.Errors;
 using AE.Market.Domain.Aggregates.Catalog.Products;
 using AE.Market.Domain.Aggregates.Catalog.Products.Variants;
@@ -14,11 +15,16 @@ namespace AE.Market.Application.Features.Catalog.Commands.CreateProduct;
 internal sealed class CreateProductCommandHandler(
     IRepository<Product> repo,
     IReadRepository<ProductVariant> variantRepo,
+    IReadRepository<Category> categoryRepo,
     IMapper mapper
 ) : IRequestHandler<CreateProductCommand, Result<ProductDto>>
 {
     public async Task<Result<ProductDto>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
     {
+        var category = await categoryRepo.GetByIdAsync(request.CategoryId, cancellationToken);
+        if (category is null)
+            return Result<ProductDto>.Fail(CatalogErrors.CategoryNotFound);
+
         var sku = Sku.Create(request.Sku);
         var existingProduct = await repo.AnyAsync(
             new BaseSpecification<Product>(p => p.Sku == sku), cancellationToken);

@@ -8,7 +8,9 @@ internal sealed class ProductAttributeValueConfiguration : IEntityTypeConfigurat
 {
     public void Configure(EntityTypeBuilder<ProductAttributeValue> builder)
     {
-        builder.ToTable("product_attribute_values", "catalog");
+        builder.ToTable("product_attribute_values", "catalog", tb =>
+            tb.HasCheckConstraint("CK_product_attribute_values_single_owner",
+                "(\"ProductId\" IS NOT NULL AND \"VariantId\" IS NULL) OR (\"ProductId\" IS NULL AND \"VariantId\" IS NOT NULL)"));
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.AttributeId).IsRequired();
@@ -22,5 +24,13 @@ internal sealed class ProductAttributeValueConfiguration : IEntityTypeConfigurat
         builder.Property(x => x.ValueBoolean);
         builder.Property(x => x.ValueDateTime);
         builder.Property(x => x.ValueOptionId);
+
+        builder.HasIndex(x => new { x.ProductId, x.AttributeId })
+            .IsUnique()
+            .HasFilter("\"ProductId\" IS NOT NULL");
+
+        builder.HasIndex(x => new { x.VariantId, x.AttributeId })
+            .IsUnique()
+            .HasFilter("\"VariantId\" IS NOT NULL");
     }
 }

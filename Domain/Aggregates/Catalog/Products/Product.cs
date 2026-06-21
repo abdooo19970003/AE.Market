@@ -222,6 +222,32 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
         UpdateLastModified();
     }
 
+    public void ActivateVariant(Guid variantId, IReadOnlyCollection<Guid>? requiredAttributeIds = null)
+    {
+        var variant = _variants.FirstOrDefault(v => v.Id == variantId)
+            ?? throw new DomainException(
+                CatalogErrors.VariantNotFound.Code,
+                CatalogErrors.VariantNotFound.Message
+            );
+
+        variant.Activate(requiredAttributeIds);
+        AddDomainEvent(new VariantActivatedDomainEvent(Id, variantId));
+        UpdateLastModified();
+    }
+
+    public void DeactivateVariant(Guid variantId)
+    {
+        var variant = _variants.FirstOrDefault(v => v.Id == variantId)
+            ?? throw new DomainException(
+                CatalogErrors.VariantNotFound.Code,
+                CatalogErrors.VariantNotFound.Message
+            );
+
+        variant.Deactivate();
+        AddDomainEvent(new VariantDeactivatedDomainEvent(Id, variantId));
+        UpdateLastModified();
+    }
+
     public ProductVariant AddVariant(Guid variantId, string name, string sku)
     {
         var variant = ProductVariant.Create(variantId, Id, name, sku);

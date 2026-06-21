@@ -1,5 +1,7 @@
 using AE.Market.API.Authentication;
 using AE.Market.API.Helpers;
+using AE.Market.Application.Features.Catalog.Commands.ActivateProduct;
+using AE.Market.Application.Features.Catalog.Commands.ActivateVariant;
 using AE.Market.Application.Features.Catalog.Commands.AdjustVariantStock;
 using AE.Market.Application.Features.Catalog.Commands.AddProductVariant;
 using AE.Market.Application.Features.Catalog.Commands.CreateProduct;
@@ -216,6 +218,24 @@ public sealed class ProductsController(IMediator mediator) : ControllerBase
         if (productId != cmd.ProductId || variantId != cmd.VariantId)
             return BadRequest("Id mismatch");
         var result = await mediator.Send(cmd, ct);
+        return result.ToActionResult();
+    }
+
+    [HttpPost("{id:guid}/activate")]
+    [Authorize]
+    [HasPermission(Permission.MutateProducts)]
+    public async Task<IActionResult> ActivateProduct(Guid id, CancellationToken ct)
+    {
+        var result = await mediator.Send(new ActivateProductCommand(id), ct);
+        return result.ToActionResult();
+    }
+
+    [HttpPost("{productId:guid}/variants/{variantId:guid}/activate")]
+    [Authorize]
+    [HasPermission(Permission.MutateProducts)]
+    public async Task<IActionResult> ActivateVariant(Guid productId, Guid variantId, CancellationToken ct)
+    {
+        var result = await mediator.Send(new ActivateVariantCommand(productId, variantId), ct);
         return result.ToActionResult();
     }
 }

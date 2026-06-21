@@ -18,7 +18,7 @@ public sealed class Category : BaseEntity, IAggregateRoot, IMetaData
 
     // The Materialized Path (e.g., "00000000-0000-.../guid-guid-guid/")
     public string Path { get; private set; } = string.Empty;
-    public URL CategoryUrl => URL.Create("Categories", Slug);
+    public URL CategoryUrl => URL.Create("categories", "slug", Slug);
 
     public Guid? ParentId { get; private set; }
     public Category? Parent { get; private set; }

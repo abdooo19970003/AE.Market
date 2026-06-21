@@ -17,7 +17,7 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     public string? ShortDescription { get; private set; }
     public string? LongDescription { get; private set; }
     public ProductStatus Status { get; private set; } = ProductStatus.Active;
-    public URL Url => URL.Create("products", Slug);
+    public URL Url => URL.Create("products", "slug", Slug);
     public bool IsPurchasable =>
         Status == ProductStatus.Active
         && (

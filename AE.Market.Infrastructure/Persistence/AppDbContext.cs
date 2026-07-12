@@ -8,6 +8,7 @@ using AE.Market.Domain.Aggregates.Catalog.Units;
 using AE.Market.Domain.Aggregates.Cart;
 using AE.Market.Domain.Aggregates.Orders;
 using AE.Market.Domain.Aggregates.Inventory;
+using AE.Market.Domain.Aggregates.Pricing;
 using AE.Market.Domain.Aggregates.Prices;
 using AE.Market.Domain.Common.Abstracts;
 using AE.Market.Infrastructure.Persistence.Outbox;
@@ -49,6 +50,8 @@ namespace AE.Market.Infrastructure.Persistence
         // Pricing Schema
         public DbSet<Price> Prices { get; set; }
         public DbSet<PriceHistory> PriceHistories { get; set; }
+        public DbSet<Marketplace> Marketplaces { get; set; }
+        public DbSet<MarketplaceTaxRate> MarketplaceTaxRates { get; set; }
 
         // Cart Schema
         public DbSet<Domain.Aggregates.Cart.Cart> Carts { get; set; }

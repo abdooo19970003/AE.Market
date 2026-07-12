@@ -1,7 +1,9 @@
 ﻿using AE.Market.Application.Common.Behaviors;
 using AE.Market.Application.Common.Interfaces;
 using AE.Market.Application.Common.Mapping;
+using AE.Market.Application.Features.Pricing.Services;
 using AE.Market.Application.Services;
+using AE.Market.Domain.Aggregates.Pricing;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +30,7 @@ namespace AE.Market.Application
             services.AddSingleton(MappingConfig.Configure());
             services.AddScoped<IMapper, AppMapper>();
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+            services.AddScoped<IPriceCalculator, PriceCalculatorService>();
 
             return services;
         }

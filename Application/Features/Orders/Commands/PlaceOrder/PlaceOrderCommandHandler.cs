@@ -5,7 +5,7 @@ using AE.Market.Application.Features.Pricing.Specs;
 using AE.Market.Application.Features.Catalog.Products.Specs;
 using AE.Market.Domain.Aggregates.Orders;
 using AE.Market.Domain.Aggregates.Orders.Errors;
-using AE.Market.Domain.Aggregates.Prices;
+using AE.Market.Domain.Aggregates.Pricing;
 using AE.Market.Domain.Aggregates.Catalog.Products;
 using AE.Market.Domain.Aggregates.Catalog.Products.Variants;
 using AE.Market.Domain.Common.Abstracts;
@@ -21,7 +21,8 @@ internal sealed class PlaceOrderCommandHandler(
     IRepository<IdempotencyRequest> idempotencyRepo,
     IReadRepository<CartAggregate> cartReadRepo,
     IRepository<CartAggregate> cartRepo,
-    IReadRepository<Price> priceRepo,
+    IPriceCalculator priceCalculator,
+    IReadRepository<Marketplace> marketplaceRepo,
     IReadRepository<ProductVariant> variantRepo,
     IReadRepository<Product> productRepo,
     ICurrentUser currentUser
@@ -45,12 +46,14 @@ internal sealed class PlaceOrderCommandHandler(
         if (cart is null || cart.Items.Count == 0)
             return Result<OrderDto>.Fail(OrderErrors.EmptyOrder);
 
+        var marketplace = await marketplaceRepo.FirstOrDefaultAsync(
+            new MarketplaceByCodeSpec("global"), ct);
+        var marketplaceId = marketplace?.Id ?? Guid.Empty;
+
         var variantIds = cart.Items.Select(i => i.VariantId).ToList();
         var variants = await variantRepo.ListWithSpecAsync(new VariantsByIdsSpec(variantIds), ct);
-        var prices = await priceRepo.ListWithSpecAsync(new ActivePricesByVariantIdsSpec(variantIds, null), ct);
 
         var variantMap = variants.ToDictionary(v => v.Id);
-        var priceMap = prices.ToDictionary(p => p.VariantId);
 
         var productIds = variantMap.Values.Select(v => v.ProductId).Distinct().ToList();
         var products = await productRepo.ListWithSpecAsync(new ProductsByIdsSpec(productIds), ct);
@@ -69,9 +72,8 @@ internal sealed class PlaceOrderCommandHandler(
                 ? product.Name
                 : string.Empty;
 
-            var sellPrice = priceMap.TryGetValue(cartItem.VariantId, out var price)
-                ? price.PriceAmount.Amount
-                : 0m;
+            var finalPrice = await priceCalculator.CalculateAsync(
+                cartItem.VariantId, cartItem.Quantity, marketplaceId, ct);
 
             var orderItem = OrderItem.Create(
                 Guid.NewGuid(),
@@ -80,7 +82,7 @@ internal sealed class PlaceOrderCommandHandler(
                 productName,
                 variant.Name,
                 variant.Sku.ToString(),
-                sellPrice,
+                finalPrice.UnitPrice.Amount,
                 cartItem.Quantity);
 
             orderItems.Add(orderItem);

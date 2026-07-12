@@ -32,6 +32,7 @@ internal sealed class UpdatePriceCommandHandler(
         var newPrice = Price.Create(
             Guid.NewGuid(),
             request.VariantId,
+            request.MarketplaceId,
             request.Type,
             newMoney);
 

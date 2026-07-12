@@ -26,7 +26,7 @@ internal sealed class SetInitialPriceCommandHandler(
             return Result<PriceDto>.Fail(PriceErrors.DuplicateActiveSalePrice);
 
         var money = Money.FromDecimal(request.Amount, request.CurrencyCode);
-        var price = Price.Create(Guid.NewGuid(), request.VariantId, request.Type, money);
+        var price = Price.Create(Guid.NewGuid(), request.VariantId, request.MarketplaceId, request.Type, money);
 
         await priceRepo.AddAsync(price, cancellationToken);
 

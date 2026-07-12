@@ -9,6 +9,7 @@ namespace AE.Market.Domain.Aggregates.Prices;
 public sealed class Price : BaseEntity, IAggregateRoot
 {
     public Guid VariantId { get; private set; }
+    public Guid MarketplaceId { get; private set; }
     public PriceType Type { get; private set; }
     public Money PriceAmount { get; private set; } = default!;
     public DateTime? ValidFrom { get; private set; }
@@ -19,6 +20,7 @@ public sealed class Price : BaseEntity, IAggregateRoot
     private Price(
         Guid id,
         Guid variantId,
+        Guid marketplaceId,
         PriceType type,
         Money priceAmount,
         DateTime? validFrom,
@@ -27,6 +29,7 @@ public sealed class Price : BaseEntity, IAggregateRoot
         : base(id)
     {
         VariantId = variantId;
+        MarketplaceId = marketplaceId;
         Type = type;
         PriceAmount = priceAmount;
         ValidFrom = validFrom;
@@ -36,6 +39,7 @@ public sealed class Price : BaseEntity, IAggregateRoot
     public static Price Create(
         Guid id,
         Guid variantId,
+        Guid marketplaceId,
         PriceType type,
         Money priceAmount,
         DateTime? validFrom = null,
@@ -48,7 +52,7 @@ public sealed class Price : BaseEntity, IAggregateRoot
         validFrom ??= DateTime.UtcNow;
         if(validTo is not null &&  validFrom >= validTo)
             throw new ArgumentException($"ValidTo cannot be before ValidFrom or in the past");
-        var price = new Price(id, variantId, type, priceAmount, validFrom, validTo);
+        var price = new Price(id, variantId, marketplaceId, type, priceAmount, validFrom, validTo);
         price.AddDomainEvent(new PriceCreatedDomainEvent(price.Id, price.VariantId));
         return price;
     }

@@ -1,11 +1,15 @@
 using AE.Market.Application.Features.Auth.DTOs;
 using AE.Market.Application.Features.Catalog.DTOs;
+using AE.Market.Application.Features.Inventory.DTOs;
+using AE.Market.Application.Features.Pricing.DTOs;
 using AE.Market.Domain.Aggregates.Auth;
 using AE.Market.Domain.Aggregates.Catalog;
 using AE.Market.Domain.Aggregates.Catalog.Attributes;
 using AE.Market.Domain.Aggregates.Catalog.Products;
 using AE.Market.Domain.Aggregates.Catalog.Products.Variants;
 using AE.Market.Domain.Aggregates.Catalog.Units;
+using AE.Market.Domain.Aggregates.Inventory;
+using AE.Market.Domain.Aggregates.Prices;
 using AE.Market.Domain.Common.ValueObjects;
 using Mapster;
 
@@ -83,6 +87,20 @@ public static class MappingConfig
         config.NewConfig<AttributeGroup, AttributeGroupDto>()
             .Map(dest => dest.Slug, src => src.Slug == null ? null : src.Slug.Value)
             .Map(dest => dest.AttributeIds, src => src.AttributeIds.ToList());
+
+        config.NewConfig<Price, PriceDto>()
+            .Map(dest => dest.Amount, src => src.PriceAmount.Amount)
+            .Map(dest => dest.Currency, src => src.PriceAmount.Currency.Code)
+            .Map(dest => dest.Type, src => src.Type.ToString())
+            .Map(dest => dest.IsActive, src => src.ValidTo == null);
+
+        config.NewConfig<PriceHistory, PriceHistoryDto>()
+            .Map(dest => dest.OldAmount, src => src.OldAmount.Amount)
+            .Map(dest => dest.NewAmount, src => src.NewAmount.Amount)
+            .Map(dest => dest.Currency, src => src.NewAmount.Currency.Code)
+            .Map(dest => dest.Reason, src => src.Reason.ToString());
+
+        config.NewConfig<InventoryItem, InventoryItemDto>();
 
         config.Compile();
         return config;

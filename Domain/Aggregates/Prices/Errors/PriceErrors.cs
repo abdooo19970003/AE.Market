@@ -23,4 +23,14 @@ public static class PriceErrors
         "Prices.Price.PriceMustBePositive",
         "Price amount must be greater than zero."
     );
+
+    public static readonly Error NoActivePrice = new(
+        "Prices.Price.NoActivePrice",
+        "No active price found for this variant."
+    );
+
+    public static readonly Error PriceAlreadyInactive = new(
+        "Prices.Price.AlreadyInactive",
+        "The price is already inactive."
+    );
 }

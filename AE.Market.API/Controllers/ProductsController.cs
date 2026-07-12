@@ -2,7 +2,6 @@ using AE.Market.API.Authentication;
 using AE.Market.API.Helpers;
 using AE.Market.Application.Features.Catalog.Commands.ActivateProduct;
 using AE.Market.Application.Features.Catalog.Commands.ActivateVariant;
-using AE.Market.Application.Features.Catalog.Commands.AdjustVariantStock;
 using AE.Market.Application.Features.Catalog.Commands.AddBundleItem;
 using AE.Market.Application.Features.Catalog.Commands.AddProductImage;
 using AE.Market.Application.Features.Catalog.Commands.AddProductRelation;
@@ -10,21 +9,17 @@ using AE.Market.Application.Features.Catalog.Commands.AddProductTag;
 using AE.Market.Application.Features.Catalog.Commands.AddProductVariant;
 using AE.Market.Application.Features.Catalog.Commands.CreateProduct;
 using AE.Market.Application.Features.Catalog.Commands.DeleteProduct;
-using AE.Market.Application.Features.Catalog.Commands.ReleaseVariantStock;
 using AE.Market.Application.Features.Catalog.Commands.RemoveBundleItem;
 using AE.Market.Application.Features.Catalog.Commands.RemoveProductAttribute;
 using AE.Market.Application.Features.Catalog.Commands.RemoveProductImage;
 using AE.Market.Application.Features.Catalog.Commands.RemoveProductRelation;
 using AE.Market.Application.Features.Catalog.Commands.RemoveProductTag;
 using AE.Market.Application.Features.Catalog.Commands.RemoveProductVariant;
-using AE.Market.Application.Features.Catalog.Commands.ReserveVariantStock;
 using AE.Market.Application.Features.Catalog.Commands.SetProductAttributeValue;
 using AE.Market.Application.Features.Catalog.Commands.SetProductAttributeValues;
 using AE.Market.Application.Features.Catalog.Commands.SetVariantAttributeValue;
 using AE.Market.Application.Features.Catalog.Commands.SetVariantAttributeValues;
 using AE.Market.Application.Features.Catalog.Commands.UpdateProduct;
-using AE.Market.Application.Features.Catalog.Commands.UpdateVariantPricing;
-using AE.Market.Application.Features.Catalog.Commands.UpdateVariantStock;
 using AE.Market.Application.Features.Catalog.Queries.BundleItems;
 using AE.Market.Application.Features.Catalog.Queries.ProductImages;
 using AE.Market.Application.Features.Catalog.Queries.ProductRelations;
@@ -116,28 +111,6 @@ public sealed class ProductsController(IMediator mediator) : ControllerBase
         return result.ToCreatedActionResult();
     }
 
-    [HttpPatch("{productId:guid}/variants/{variantId:guid}/pricing")]
-    [Authorize]
-    [HasPermission(Permission.MutateProducts)]
-    public async Task<IActionResult> UpdateVariantPricing(Guid productId, Guid variantId, [FromBody] UpdateVariantPricingCommand cmd, CancellationToken ct)
-    {
-        if (productId != cmd.ProductId || variantId != cmd.VariantId)
-            return BadRequest("Id mismatch");
-        var result = await mediator.Send(cmd, ct);
-        return result.ToActionResult();
-    }
-
-    [HttpPatch("{productId:guid}/variants/{variantId:guid}/stock")]
-    [Authorize]
-    [HasPermission(Permission.MutateProducts)]
-    public async Task<IActionResult> UpdateVariantStock(Guid productId, Guid variantId, [FromBody] UpdateVariantStockCommand cmd, CancellationToken ct)
-    {
-        if (productId != cmd.ProductId || variantId != cmd.VariantId)
-            return BadRequest("Id mismatch");
-        var result = await mediator.Send(cmd, ct);
-        return result.ToActionResult();
-    }
-
     [HttpDelete("{productId:guid}/variants/{variantId:guid}")]
     [Authorize]
     [HasPermission(Permission.MutateProducts)]
@@ -145,39 +118,6 @@ public sealed class ProductsController(IMediator mediator) : ControllerBase
     {
         var result = await mediator.Send(new RemoveProductVariantCommand(productId, variantId), ct);
         return result.ToDeletedActionResult();
-    }
-
-    [HttpPost("{productId:guid}/variants/{variantId:guid}/reserve")]
-    [Authorize]
-    [HasPermission(Permission.MutateProducts)]
-    public async Task<IActionResult> ReserveVariantStock(Guid productId, Guid variantId, [FromBody] ReserveVariantStockCommand cmd, CancellationToken ct)
-    {
-        if (productId != cmd.ProductId || variantId != cmd.VariantId)
-            return BadRequest("Id mismatch");
-        var result = await mediator.Send(cmd, ct);
-        return result.ToActionResult();
-    }
-
-    [HttpPost("{productId:guid}/variants/{variantId:guid}/release")]
-    [Authorize]
-    [HasPermission(Permission.MutateProducts)]
-    public async Task<IActionResult> ReleaseVariantStock(Guid productId, Guid variantId, [FromBody] ReleaseVariantStockCommand cmd, CancellationToken ct)
-    {
-        if (productId != cmd.ProductId || variantId != cmd.VariantId)
-            return BadRequest("Id mismatch");
-        var result = await mediator.Send(cmd, ct);
-        return result.ToActionResult();
-    }
-
-    [HttpPost("{productId:guid}/variants/{variantId:guid}/adjust")]
-    [Authorize]
-    [HasPermission(Permission.MutateProducts)]
-    public async Task<IActionResult> AdjustVariantStock(Guid productId, Guid variantId, [FromBody] AdjustVariantStockCommand cmd, CancellationToken ct)
-    {
-        if (productId != cmd.ProductId || variantId != cmd.VariantId)
-            return BadRequest("Id mismatch");
-        var result = await mediator.Send(cmd, ct);
-        return result.ToActionResult();
     }
 
     [HttpPost("{productId:guid}/attributes")]

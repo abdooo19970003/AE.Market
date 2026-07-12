@@ -5,6 +5,8 @@ using AE.Market.Domain.Aggregates.Catalog.Attributes;
 using AE.Market.Domain.Aggregates.Catalog.Products;
 using AE.Market.Domain.Aggregates.Catalog.Products.Variants;
 using AE.Market.Domain.Aggregates.Catalog.Units;
+using AE.Market.Domain.Aggregates.Inventory;
+using AE.Market.Domain.Aggregates.Prices;
 using AE.Market.Domain.Common.Abstracts;
 using AE.Market.Infrastructure.Persistence.Outbox;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +43,13 @@ namespace AE.Market.Infrastructure.Persistence
         public DbSet<ProductAttributeValue> ProductAttributeValues { get; set; }
         public DbSet<AttributeGroup> AttributeGroups { get; set; }
         public DbSet<ProductRelation> ProductRelations { get; set; }
+
+        // Pricing Schema
+        public DbSet<Price> Prices { get; set; }
+        public DbSet<PriceHistory> PriceHistories { get; set; }
+
+        // Inventory Schema
+        public DbSet<InventoryItem> InventoryItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

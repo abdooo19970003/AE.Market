@@ -23,4 +23,9 @@ public static class InventoryErrors
         "Inventory.Item.ReservationExceedsAvailable",
         "Reservation quantity exceeds available stock."
     );
+
+    public static readonly Error InventoryItemAlreadyExists = new(
+        "Inventory.Item.AlreadyExists",
+        "An inventory item already exists for this variant."
+    );
 }

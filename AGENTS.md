@@ -14,7 +14,7 @@ AE.Market.slnx
     └── AE.Market.Integration.Tests/      — Testcontainers (PostgreSQL + Redis)
 ```
 
-6 projects. Domain boundaries by **folder convention** (not separate projects). Currently only **Auth** aggregate is implemented (users, profiles, permissions, refresh tokens). Catalog/Pricing/Inventory/Cart/Orders are planned but absent.
+6 projects. Domain boundaries by **folder convention** (not separate projects). **Auth**, **Catalog** (Products, Variants, Categories, Brands, Attributes, Units, TaxCodes, Tags, Relations, Bundles), **Prices** (full CRUD + caching), and **Inventory** (full CRUD + caching) are implemented. **Cart**, **Orders**, **Search**, **Analytics** are planned but absent.
 
 ## Critical Conventions
 
@@ -98,7 +98,6 @@ docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 - **No CI workflow** yet (`.github/workflows/` is empty)
 - **No Elasticsearch** — no packages, no indices, no queries
 - **Outbox interval**: 100s (not 5s as documented in plan)
-- Only **Auth** feature has code; Catalog, Pricing, etc. are stubs at most
 
 ## Dev Environment
 - Docker Compose: postgres:16-alpine, redis, datalust/seq
@@ -113,7 +112,7 @@ docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 
 | Email | Password | Permissions |
 |---|---|---|
-| `admin@aemarket.com` | `Admin@12345` | AccessUsers, MutateUsers |
+| `admin@aemarket.com` | `Admin@12345` | AccessUsers, MutateUsers, MutateCategories, MutateProducts, MutateUnits, MutateTaxCodes, MutateBrands |
 | `client@aemarket.com` | `Client@12345` | (none) |
 
 ## graphify

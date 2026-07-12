@@ -16,8 +16,8 @@ public class FeatureAggregateIsolationTests : BaseTest
         ["Products"] = ["AE.Market.Domain.Aggregates.Catalog"],
         ["Variants"] = ["AE.Market.Domain.Aggregates.Catalog"],
         ["Attributes"] = ["AE.Market.Domain.Aggregates.Catalog"],
-        ["Pricing"] = ["AE.Market.Domain.Aggregates.Pricing"],
-        ["Inventory"] = ["AE.Market.Domain.Aggregates.Inventory"],
+        ["Pricing"] = ["AE.Market.Domain.Aggregates.Prices", "AE.Market.Domain.Aggregates.Catalog"],
+        ["Inventory"] = ["AE.Market.Domain.Aggregates.Inventory", "AE.Market.Domain.Aggregates.Catalog"],
         ["Cart"] = ["AE.Market.Domain.Aggregates.Cart"],
         ["Orders"] = ["AE.Market.Domain.Aggregates.Orders"],
     };

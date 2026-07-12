@@ -47,7 +47,7 @@ public sealed class Price : BaseEntity, IAggregateRoot
 
         validFrom ??= DateTime.UtcNow;
         if(validTo is not null &&  validFrom >= validTo)
-            throw new ArgumentException($"ValidTo cannot be before ValidFrom or in in the past");
+            throw new ArgumentException($"ValidTo cannot be before ValidFrom or in the past");
         var price = new Price(id, variantId, type, priceAmount, validFrom, validTo);
         price.AddDomainEvent(new PriceCreatedDomainEvent(price.Id, price.VariantId));
         return price;
@@ -59,6 +59,22 @@ public sealed class Price : BaseEntity, IAggregateRoot
         ValidFrom = validFrom;
         ValidTo = validTo;
         AddDomainEvent(new PriceUpdatedDomainEvent(Id, VariantId));
+        UpdateLastModified();
+    }
+
+    public Money Deactivate()
+    {
+        var oldAmount = PriceAmount;
+        ValidTo = DateTime.UtcNow;
+        AddDomainEvent(new PriceUpdatedDomainEvent(Id, VariantId));
+        UpdateLastModified();
+        return oldAmount;
+    }
+
+    public void Activate(DateTime? newValidFrom = null)
+    {
+        ValidFrom = newValidFrom ?? DateTime.UtcNow;
+        ValidTo = null;
         UpdateLastModified();
     }
 
@@ -82,5 +98,10 @@ public sealed class Price : BaseEntity, IAggregateRoot
             return false;
 
         return true;
+    }
+
+    public bool IsActive()
+    {
+        return ValidTo is null && IsValid();
     }
 }

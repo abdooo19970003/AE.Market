@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  DOCKER_IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore AE.Market.slnx
+
+      - name: Build
+        run: dotnet build AE.Market.slnx --configuration Release --no-restore
+
+      - name: Domain Tests
+        run: dotnet test tests/AE.Market.Domain.Tests/AE.Market.Domain.Tests.csproj --configuration Release --no-build --verbosity normal
+
+      - name: Architecture Tests
+        run: dotnet test AE.Market.ArchitectureTests/AE.Market.ArchitectureTests.csproj --configuration Release --no-build --verbosity normal
+
+      - name: Integration Tests
+        uses: Coactions/setup-docker-compose@v1
+        with:
+          version: v2.24.0
+
+      - name: Run Integration Tests
+        run: dotnet test tests/AE.Market.Integration.Tests/AE.Market.Integration.Tests.csproj --configuration Release --no-build --verbosity normal
+
+  docker-build:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: AE.Market.API/Dockerfile
+          push: true
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:latest
+            ${{ env.DOCKER_IMAGE }}:${{ github.sha }}

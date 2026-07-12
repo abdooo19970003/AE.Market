@@ -15,6 +15,7 @@ public sealed class InventoryItem : BaseEntity, IAggregateRoot
     public int? BackorderLimit { get; private set; }
     public int LowStockThreshold { get; private set; }
     public ShippingDimensions ShippingDimensions { get; private set; }
+    public byte[] RowVersion { get; private set; } = [];
 
     private InventoryItem(
         Guid id,
@@ -85,6 +86,10 @@ public sealed class InventoryItem : BaseEntity, IAggregateRoot
             throw new ArgumentOutOfRangeException(
                 nameof(quantity),
                 "Stock quantity cannot be negative."
+            );
+        if (quantity < ReservedQuantity)
+            throw new InvalidOperationException(
+                $"Cannot set quantity below reserved amount. Reserved: {ReservedQuantity}, requested: {quantity}."
             );
 
         var oldQuantity = StockQuantity;

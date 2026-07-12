@@ -465,6 +465,19 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
         UpdateLastModified();
     }
 
+    public void SetVariantListPrice(Guid variantId, decimal price)
+    {
+        var variant = _variants.FirstOrDefault(v => v.Id == variantId);
+        if (variant is null)
+            throw new DomainException(
+                CatalogErrors.VariantNotFound.Code,
+                CatalogErrors.VariantNotFound.Message
+            );
+
+        variant.SetOrUpdateListPrice(price);
+        UpdateLastModified();
+    }
+
     public ProductAttributeValue SetVariantAttributeValue(
         Guid variantId,
         Guid valueId,

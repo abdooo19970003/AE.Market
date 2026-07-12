@@ -3,11 +3,14 @@ using AE.Market.API.Exceptions;
 using AE.Market.API.Middlewares;
 using AE.Market.Application;
 using AE.Market.Application.Common.Interfaces;
+using AE.Market.Application.Services;
 using AE.Market.Infrastructure;
 using AE.Market.Infrastructure.Persistence;
+using AE.Market.Infrastructure.Persistence.Seeders;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Serilog;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace AE.Market.API
 {
@@ -77,6 +80,8 @@ namespace AE.Market.API
                 using var scope = app.Services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.Database.EnsureCreated();
+                var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder>();
+                seeder.SeedAsync().GetAwaiter().GetResult();
             }
             if (app.Environment.IsDevelopment())
             {

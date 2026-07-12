@@ -7,8 +7,6 @@ public sealed record UpdateUserProfileCommand(
     string? FirstName,
     string? LastName,
     string? PhoneNumber,
-    string? City,
-    string? Country,
-    string? AddressLine,
-    string? ProfileImageUrl
+    string? ProfileImageUrl,
+    List<AddressDto>? Addresses
 ) : ICommand<UserProfileDto>;

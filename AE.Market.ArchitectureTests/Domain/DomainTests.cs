@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 using AE.Market.ArchitectureTests.CustomRules;
-using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using FluentAssertions;
 using NetArchTest.Rules;
 
@@ -79,7 +79,8 @@ namespace AE.Market.ArchitectureTests.Domain
                 .Should()
                 .BeSealed()
                 .GetResult();
-            result.IsSuccessful.Should().BeTrue();
+            var failingTypes = string.Join(",", result.FailingTypeNames ?? []);
+            result.IsSuccessful.Should().BeTrue("because Entities should be sealed calss."+ $"failing types:{failingTypes}");
         }
 
         [Fact]
@@ -96,8 +97,12 @@ namespace AE.Market.ArchitectureTests.Domain
 
             foreach (Type entity in NotAggregateRootEntities)
             {
-                var methods = entity.Methods();
-                if (methods.Any(m => m.IsPublic))
+                var publicMethods = entity
+                    .GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                    .Where(m => !m.IsSpecialName)
+                    .Where(m => m.GetBaseDefinition().DeclaringType != typeof(BaseEntity))
+                    .ToList();
+                if (publicMethods.Any())
                 {
                     FailingTypes.Add(entity);
                 }

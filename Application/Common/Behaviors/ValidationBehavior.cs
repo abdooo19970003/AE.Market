@@ -1,4 +1,4 @@
-﻿using AE.Market.Domain.Common;
+﻿using AE.Market.Domain.Common.Abstracts;
 using FluentValidation;
 using FluentValidation.Results;
 using MediatR;

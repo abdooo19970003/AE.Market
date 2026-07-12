@@ -1,4 +1,4 @@
-using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AE.Market.API.Helpers
@@ -34,6 +34,13 @@ namespace AE.Market.API.Helpers
             if (result.IsSuccess)
                 return new OkObjectResult(result.Value);
 
+            return CreateProblemResult(result.Error, result.Errors);
+        }
+
+        public static IActionResult ToDeletedActionResult(this Result result)
+        {
+            if (result.IsSuccess)
+                return new NoContentResult();
             return CreateProblemResult(result.Error, result.Errors);
         }
 
@@ -76,9 +83,9 @@ namespace AE.Market.API.Helpers
             if (error.Code.Contains("AlreadyExist", StringComparison.OrdinalIgnoreCase) ||
                 error.Code.Contains("Conflict", StringComparison.OrdinalIgnoreCase))
                 return StatusCodes.Status409Conflict;
-            if (error.Code.StartsWith("Application.Validation", StringComparison.OrdinalIgnoreCase))
+            if (error.Code.StartsWith("Application.Validation.", StringComparison.OrdinalIgnoreCase))
                 return StatusCodes.Status400BadRequest;
-            if (error.Code.StartsWith("Application.", StringComparison.OrdinalIgnoreCase))
+            if (error.Code.StartsWith("Application.Internal.", StringComparison.OrdinalIgnoreCase))
                 return StatusCodes.Status500InternalServerError;
 
             return StatusCodes.Status400BadRequest;

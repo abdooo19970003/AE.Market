@@ -14,7 +14,7 @@ AE.Market.slnx
     └── AE.Market.Integration.Tests/      — Testcontainers (PostgreSQL + Redis)
 ```
 
-6 projects. Domain boundaries by **folder convention** (not separate projects). Currently only **Auth** aggregate is implemented (users, profiles, permissions, refresh tokens). Catalog/Pricing/Inventory/Cart/Orders are planned but absent.
+6 projects. Domain boundaries by **folder convention** (not separate projects). **Auth**, **Catalog** (Products, Variants, Categories, Brands, Attributes, Units, TaxCodes, Tags, Relations, Bundles), **Prices** (full CRUD + caching), and **Inventory** (full CRUD + caching) are implemented. **Cart**, **Orders**, **Search**, **Analytics** are planned but absent.
 
 ## Critical Conventions
 
@@ -98,7 +98,6 @@ docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 - **No CI workflow** yet (`.github/workflows/` is empty)
 - **No Elasticsearch** — no packages, no indices, no queries
 - **Outbox interval**: 100s (not 5s as documented in plan)
-- Only **Auth** feature has code; Catalog, Pricing, etc. are stubs at most
 
 ## Dev Environment
 - Docker Compose: postgres:16-alpine, redis, datalust/seq
@@ -113,5 +112,18 @@ docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 
 | Email | Password | Permissions |
 |---|---|---|
-| `admin@aemarket.com` | `Admin@12345` | AccessUsers, MutateUsers |
+| `admin@aemarket.com` | `Admin@12345` | AccessUsers, MutateUsers, MutateCategories, MutateProducts, MutateUnits, MutateTaxCodes, MutateBrands |
 | `client@aemarket.com` | `Client@12345` | (none) |
+
+## graphify
+
+This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+
+When the user types `/graphify`, invoke the `skill` tool with `skill: "graphify"` before doing anything else.
+
+Rules:
+- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
+- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
+- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
+- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
+- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).

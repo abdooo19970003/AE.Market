@@ -1,6 +1,7 @@
-﻿using AE.Market.Domain.Aggregates.Auth.Events;
-using AE.Market.Domain.Aggregates.Auth.ValueObjects;
-using AE.Market.Domain.Common;
+﻿using AE.Market.Domain.Aggregates.Auth.ValueObjects;
+using AE.Market.Domain.Common.Abstracts;
+using AE.Market.Domain.Common.Enums;
+using AE.Market.Domain.Common.ValueObjects;
 
 namespace AE.Market.Domain.Aggregates.Auth
 {
@@ -12,8 +13,10 @@ namespace AE.Market.Domain.Aggregates.Auth
         public string FullName =>
             string.Join(" ", new[] { FirstName, LastName }.Where(x => !string.IsNullOrEmpty(x)));
         public PhoneNumber? Phone { get; private set; }
-        public Address? Address { get; private set; }
         public ImageUrl? ProfileImage { get; private set; }
+
+        private readonly List<Address> _addresses = [];
+        public IReadOnlyCollection<Address> Addresses => _addresses.AsReadOnly();
 
         private UserProfile() { }
 
@@ -29,15 +32,12 @@ namespace AE.Market.Domain.Aggregates.Auth
 
         internal static UserProfile Create(Guid id, Guid userId, string firstName, string? lastName)
         {
-            var profile = new UserProfile(id, userId, firstName, lastName);
-            profile.AddDomainEvent(new UserProfileCreatedDomainEvent(id, userId));
-            return profile;
+            return new UserProfile(id, userId, firstName, lastName);
         }
 
         internal UserProfile SetPhoneNumber(string phoneNumber)
         {
             Phone = phoneNumber;
-            AddDomainEvent(new UserProfileUpdatedDomainEvent(UserId));
             UpdateLastModified();
             return this;
         }
@@ -45,28 +45,48 @@ namespace AE.Market.Domain.Aggregates.Auth
         internal UserProfile RemovePhoneNumber()
         {
             Phone = null;
-            AddDomainEvent(new UserProfileUpdatedDomainEvent(UserId));
             UpdateLastModified();
 
             return this;
         }
 
-        internal UserProfile SetAddress(string city, string country, string? addressline)
+        internal Address AddAddress(
+            string country,
+            string city,
+            string? addressLine,
+            string? label,
+            bool isPrimary,
+            AddressType type)
         {
-            Address = Address.Create(country, city, addressline);
-            AddDomainEvent(new UserProfileUpdatedDomainEvent(UserId));
-            UpdateLastModified();
+            if (isPrimary)
+            {
+                for (int i = 0; i < _addresses.Count; i++)
+                {
+                    if (_addresses[i].IsPrimary)
+                        _addresses[i] = _addresses[i].ClearPrimary();
+                }
+            }
 
-            return this;
+            var address = Address.Create(country, city, addressLine: addressLine, label: label, isPrimary: isPrimary, type: type);
+            _addresses.Add(address);
+            UpdateLastModified();
+            return address;
         }
 
-        internal UserProfile RemoveAddress()
+        internal bool RemoveAddress(string country, string city, AddressType type)
         {
-            Address = null;
-            AddDomainEvent(new UserProfileUpdatedDomainEvent(UserId));
+            var address = _addresses.FirstOrDefault(a =>
+                a.Country == country && a.City == city && a.Type == type);
+            if (address is null) return false;
+            _addresses.Remove(address);
             UpdateLastModified();
+            return true;
+        }
 
-            return this;
+        internal void ClearAddresses()
+        {
+            _addresses.Clear();
+            UpdateLastModified();
         }
 
         internal UserProfile SetNames(string firstName, string? lastName)
@@ -74,7 +94,6 @@ namespace AE.Market.Domain.Aggregates.Auth
             FirstName = firstName;
             if (!string.IsNullOrEmpty(lastName))
                 LastName = lastName;
-            AddDomainEvent(new UserProfileUpdatedDomainEvent(UserId));
             UpdateLastModified();
 
             return this;
@@ -83,7 +102,6 @@ namespace AE.Market.Domain.Aggregates.Auth
         internal UserProfile SetProfileImage(string url)
         {
             ProfileImage = url;
-            AddDomainEvent(new UserProfileUpdatedDomainEvent(UserId));
             UpdateLastModified();
 
             return this;
@@ -92,7 +110,6 @@ namespace AE.Market.Domain.Aggregates.Auth
         internal UserProfile RemoveProfileImage()
         {
             ProfileImage = null;
-            AddDomainEvent(new UserProfileUpdatedDomainEvent(UserId));
             UpdateLastModified();
 
             return this;

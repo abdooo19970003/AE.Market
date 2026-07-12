@@ -27,12 +27,12 @@ namespace AE.Market.API.Controllers
     {
         [HttpPost("register")]
         public async Task<IActionResult> Register(
-            RegisterCommand cmd,
+            [FromBody] RegisterCommand cmd,
             CancellationToken cancellationToken
         )
         {
             var result = await mediator.Send(cmd, cancellationToken);
-            return result.ToActionResult();
+            return result.ToCreatedActionResult();
         }
 
         [HttpPost("login")]
@@ -47,7 +47,7 @@ namespace AE.Market.API.Controllers
 
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh(
-            RefreshCommand cmd,
+            [FromBody] RefreshCommand cmd,
             CancellationToken cancellationToken
         )
         {
@@ -111,12 +111,12 @@ namespace AE.Market.API.Controllers
             return result.ToNotFoundActionResult();
         }
 
-        [HttpPut("users/{userId:guid}/permissions")]
+        [HttpPost("users/{userId:guid}/permissions")]
         [Authorize]
         [HasPermission(Permission.MutateUsers)]
         public async Task<IActionResult> GrantPermission(
             Guid userId,
-            [FromQuery] Permission permission,
+            [FromQuery] string permission,
             CancellationToken ct
         )
         {
@@ -129,12 +129,12 @@ namespace AE.Market.API.Controllers
         [HasPermission(Permission.MutateUsers)]
         public async Task<IActionResult> RevokePermission(
             Guid userId,
-            [FromQuery] Permission permission,
+            [FromQuery] string permission,
             CancellationToken ct
         )
         {
             var result = await mediator.Send(new RevokePermissionCommand(userId, permission), ct);
-            return result.ToActionResult();
+            return result.ToDeletedActionResult();
         }
 
         [HttpPut("users/{id:guid}/disable")]
@@ -161,7 +161,7 @@ namespace AE.Market.API.Controllers
         public async Task<IActionResult> DeleteUser(Guid id, CancellationToken ct)
         {
             var result = await mediator.Send(new DeleteUserCommand(id), ct);
-            return result.ToActionResult();
+            return result.ToDeletedActionResult();
         }
     }
 }

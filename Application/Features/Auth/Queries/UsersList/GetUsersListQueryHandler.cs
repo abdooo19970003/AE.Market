@@ -3,7 +3,7 @@ using AE.Market.Application.Common.Mapping;
 using AE.Market.Application.Features.Auth.DTOs;
 using AE.Market.Domain.Aggregates.Auth;
 using AE.Market.Domain.Aggregates.Auth.Errors;
-using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using MediatR;
 
 namespace AE.Market.Application.Features.Auth.Queries.UsersList

@@ -1,5 +1,7 @@
 using AE.Market.Domain.Aggregates.Auth;
 using AE.Market.Domain.Aggregates.Auth.Events;
+using AE.Market.Domain.Common.Abstracts;
+using AE.Market.Domain.Common.Enums;
 using AE.Market.Domain.Exceptions;
 using FluentAssertions;
 using System.Security.Cryptography;
@@ -251,7 +253,7 @@ public sealed class UserTests
 
             user.CreateProfile(profileId, "John", "Doe");
 
-            var domainEvent = user.Profile!.DomainEvents.Should().ContainSingle(e =>
+            var domainEvent = user.DomainEvents.Should().ContainSingle(e =>
                 e.GetType() == typeof(UserProfileCreatedDomainEvent)
             ).Which;
             var created = (UserProfileCreatedDomainEvent)domainEvent;
@@ -279,7 +281,7 @@ public sealed class UserTests
 
             user.UpdateProfileNames("Jane", "Smith");
 
-            user.Profile!.DomainEvents.Should().Contain(e =>
+            user.DomainEvents.Should().Contain(e =>
                 e.GetType() == typeof(UserProfileUpdatedDomainEvent)
                 && ((UserProfileUpdatedDomainEvent)e).UserId == user.Id
             );
@@ -293,6 +295,383 @@ public sealed class UserTests
             var act = () => user.UpdateProfileNames("Jane", "Smith");
 
             act.Should().Throw<InvalidOperationException>();
+        }
+    }
+
+    public sealed class DisableEnable
+    {
+        [Fact]
+        public void Disable_SetsIsActiveToFalse()
+        {
+            var user = CreateValidUser();
+
+            user.Disable();
+
+            user.IsActive.Should().BeFalse();
+        }
+
+        [Fact]
+        public void Disable_WhenAlreadyDisabled_DoesNothing()
+        {
+            var user = CreateValidUser();
+
+            user.Disable();
+            user.Disable();
+
+            user.IsActive.Should().BeFalse();
+            user.DomainEvents.Should().ContainSingle(e => e is UserDisabledDomainEvent);
+        }
+
+        [Fact]
+        public void Disable_RaisesUserDisabledDomainEvent()
+        {
+            var user = CreateValidUser();
+
+            user.Disable();
+
+            user.DomainEvents.Should().Contain(e => e is UserDisabledDomainEvent);
+        }
+
+        [Fact]
+        public void Enable_SetsIsActiveToTrue()
+        {
+            var user = CreateValidUser();
+
+            user.Disable();
+            user.Enable();
+
+            user.IsActive.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Enable_WhenAlreadyEnabled_DoesNothing()
+        {
+            var user = CreateValidUser();
+
+            user.Enable();
+
+            user.DomainEvents.Should().NotContain(e => e is UserEnabledDomainEvent);
+        }
+
+        [Fact]
+        public void Enable_RaisesUserEnabledDomainEvent()
+        {
+            var user = CreateValidUser();
+
+            user.Disable();
+            user.Enable();
+
+            user.DomainEvents.Should().Contain(e => e is UserEnabledDomainEvent);
+        }
+    }
+
+    public sealed class ProfileAddress
+    {
+        [Fact]
+        public void AddProfileAddress_AddsAddress()
+        {
+            var user = CreateValidUser();
+            user.CreateProfile(Guid.NewGuid(), "John", "Doe");
+
+            user.AddProfileAddress("Egypt", "Cairo", "Street 1", "Home", true, AddressType.Residence);
+
+            user.Profile!.Addresses.Should().ContainSingle();
+            user.Profile!.Addresses.First().City.Should().Be("Cairo");
+        }
+
+        [Fact]
+        public void AddProfileAddress_WithPrimary_ClearsPreviousPrimary()
+        {
+            var user = CreateValidUser();
+            user.CreateProfile(Guid.NewGuid(), "John", "Doe");
+            user.AddProfileAddress("Egypt", "Cairo", null, "Home", true, AddressType.Residence);
+
+            user.AddProfileAddress("Egypt", "Alexandria", null, "Office", true, AddressType.Business);
+
+            user.Profile!.Addresses.Count(a => a.IsPrimary).Should().Be(1);
+            user.Profile!.Addresses.First(a => a.City == "Alexandria").IsPrimary.Should().BeTrue();
+        }
+
+        [Fact]
+        public void AddProfileAddress_RaisesUserProfileUpdatedDomainEvent()
+        {
+            var user = CreateValidUser();
+            user.CreateProfile(Guid.NewGuid(), "John", "Doe");
+
+            user.AddProfileAddress("Egypt", "Cairo", null, "Home", true, AddressType.Residence);
+
+            user.DomainEvents.Should().Contain(e => e is UserProfileUpdatedDomainEvent);
+        }
+
+        [Fact]
+        public void AddProfileAddress_WithoutProfile_ThrowsInvalidOperation()
+        {
+            var user = CreateValidUser();
+
+            var act = () => user.AddProfileAddress("Egypt", "Cairo", null, "Home", true, AddressType.Residence);
+
+            act.Should().Throw<InvalidOperationException>();
+        }
+
+        [Fact]
+        public void RemoveProfileAddress_RemovesMatchingAddress()
+        {
+            var user = CreateValidUser();
+            user.CreateProfile(Guid.NewGuid(), "John", "Doe");
+            user.AddProfileAddress("Egypt", "Cairo", null, "Home", true, AddressType.Residence);
+            user.AddProfileAddress("Egypt", "Alexandria", null, "Office", false, AddressType.Business);
+
+            var removed = user.RemoveProfileAddress("Egypt", "Alexandria", AddressType.Business);
+
+            removed.Should().BeTrue();
+            user.Profile!.Addresses.Should().ContainSingle();
+            user.Profile!.Addresses.First().City.Should().Be("Cairo");
+        }
+
+        [Fact]
+        public void RemoveProfileAddress_WithNoMatch_ReturnsFalse()
+        {
+            var user = CreateValidUser();
+            user.CreateProfile(Guid.NewGuid(), "John", "Doe");
+            user.AddProfileAddress("Egypt", "Cairo", null, "Home", true, AddressType.Residence);
+
+            var removed = user.RemoveProfileAddress("Egypt", "Giza", AddressType.Residence);
+
+            removed.Should().BeFalse();
+            user.Profile!.Addresses.Should().ContainSingle();
+        }
+
+        [Fact]
+        public void RemoveProfileAddress_WithoutProfile_ThrowsInvalidOperation()
+        {
+            var user = CreateValidUser();
+
+            var act = () => user.RemoveProfileAddress("Egypt", "Cairo", AddressType.Residence);
+
+            act.Should().Throw<InvalidOperationException>();
+        }
+
+        [Fact]
+        public void ClearProfileAddresses_EmptiesAddresses()
+        {
+            var user = CreateValidUser();
+            user.CreateProfile(Guid.NewGuid(), "John", "Doe");
+            user.AddProfileAddress("Egypt", "Cairo", null, "Home", true, AddressType.Residence);
+            user.AddProfileAddress("Egypt", "Alexandria", null, "Office", false, AddressType.Business);
+
+            user.ClearProfileAddresses();
+
+            user.Profile!.Addresses.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void ClearProfileAddresses_WhenEmpty_DoesNotThrow()
+        {
+            var user = CreateValidUser();
+            user.CreateProfile(Guid.NewGuid(), "John", "Doe");
+
+            var act = () => user.ClearProfileAddresses();
+
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public void ClearProfileAddresses_RaisesUserProfileUpdatedDomainEvent()
+        {
+            var user = CreateValidUser();
+            user.CreateProfile(Guid.NewGuid(), "John", "Doe");
+
+            user.ClearProfileAddresses();
+
+            user.DomainEvents.Should().Contain(e => e is UserProfileUpdatedDomainEvent);
+        }
+    }
+
+    public sealed class ProfilePhone
+    {
+        [Fact]
+        public void UpdateProfilePhone_SetsPhoneNumber()
+        {
+            var user = CreateValidUser();
+            user.CreateProfile(Guid.NewGuid(), "John", "Doe");
+
+            user.UpdateProfilePhone("05554443322");
+
+            user.Profile!.Phone!.Value.Should().Be("05554443322");
+        }
+
+        [Fact]
+        public void UpdateProfilePhone_WithEmptyString_RemovesPhone()
+        {
+            var user = CreateValidUser();
+            user.CreateProfile(Guid.NewGuid(), "John", "Doe");
+            user.UpdateProfilePhone("05554443322");
+
+            user.UpdateProfilePhone("");
+
+            user.Profile!.Phone.Should().BeNull();
+        }
+
+        [Fact]
+        public void UpdateProfilePhone_RaisesUserProfileUpdatedDomainEvent()
+        {
+            var user = CreateValidUser();
+            user.CreateProfile(Guid.NewGuid(), "John", "Doe");
+
+            user.UpdateProfilePhone("05554443322");
+
+            user.DomainEvents.Should().Contain(e => e is UserProfileUpdatedDomainEvent);
+        }
+
+        [Fact]
+        public void UpdateProfilePhone_WithoutProfile_ThrowsInvalidOperation()
+        {
+            var user = CreateValidUser();
+
+            var act = () => user.UpdateProfilePhone("05554443322");
+
+            act.Should().Throw<InvalidOperationException>();
+        }
+    }
+
+    public sealed class ProfileImage
+    {
+        [Fact]
+        public void UpdateProfileImage_SetsImage()
+        {
+            var user = CreateValidUser();
+            user.CreateProfile(Guid.NewGuid(), "John", "Doe");
+
+            user.UpdateProfileImage("https://example.com/image.jpg");
+
+            user.Profile!.ProfileImage!.Value.Should().Be("https://example.com/image.jpg");
+        }
+
+        [Fact]
+        public void UpdateProfileImage_WithEmptyString_RemovesImage()
+        {
+            var user = CreateValidUser();
+            user.CreateProfile(Guid.NewGuid(), "John", "Doe");
+            user.UpdateProfileImage("https://example.com/image.jpg");
+
+            user.UpdateProfileImage("");
+
+            user.Profile!.ProfileImage.Should().BeNull();
+        }
+
+        [Fact]
+        public void UpdateProfileImage_RaisesUserProfileUpdatedDomainEvent()
+        {
+            var user = CreateValidUser();
+            user.CreateProfile(Guid.NewGuid(), "John", "Doe");
+
+            user.UpdateProfileImage("https://example.com/image.jpg");
+
+            user.DomainEvents.Should().Contain(e => e is UserProfileUpdatedDomainEvent);
+        }
+
+        [Fact]
+        public void UpdateProfileImage_WithoutProfile_ThrowsInvalidOperation()
+        {
+            var user = CreateValidUser();
+
+            var act = () => user.UpdateProfileImage("https://example.com/image.jpg");
+
+            act.Should().Throw<InvalidOperationException>();
+        }
+    }
+
+    public sealed class RemovePermissions
+    {
+        [Fact]
+        public void RemovePermissions_RemovesMultiple()
+        {
+            var user = CreateValidUser();
+            var p1 = user.AddPermission(Permission.AccessUsers);
+            var p2 = user.AddPermission(Permission.MutateUsers);
+
+            user.RemovePermissions(new[] { p1, p2 });
+
+            user.Permissions.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void RemovePermissions_WithEmptyList_DoesNothing()
+        {
+            var user = CreateValidUser();
+            user.AddPermission(Permission.AccessUsers);
+
+            user.RemovePermissions(Array.Empty<UserPermission>());
+
+            user.Permissions.Should().HaveCount(1);
+        }
+
+        [Fact]
+        public void RemovePermissions_WithNonExistent_IgnoresSilently()
+        {
+            var user = CreateValidUser();
+            user.AddPermission(Permission.AccessUsers);
+            var nonExistent = UserPermission.Create(Guid.NewGuid(), user.Id, Permission.MutateUsers);
+
+            user.RemovePermissions(new[] { nonExistent });
+
+            user.Permissions.Should().HaveCount(1);
+        }
+    }
+
+    public sealed class DeleteRestore
+    {
+        [Fact]
+        public void Delete_SetsIsDeletedToTrue()
+        {
+            var user = CreateValidUser();
+
+            user.Delete();
+
+            user.IsDeleted.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Delete_WhenAlreadyDeleted_DoesNothing()
+        {
+            var user = CreateValidUser();
+
+            user.Delete();
+            user.Delete();
+
+            user.DomainEvents.Should().ContainSingle(e => e is EntityDeletedDomainEvent);
+        }
+
+        [Fact]
+        public void Delete_RaisesEntityDeletedDomainEvent()
+        {
+            var user = CreateValidUser();
+
+            user.Delete();
+
+            user.DomainEvents.Should().Contain(e => e is EntityDeletedDomainEvent);
+        }
+
+        [Fact]
+        public void Restore_SetsIsDeletedToFalse()
+        {
+            var user = CreateValidUser();
+            user.Delete();
+
+            user.Restore();
+
+            user.IsDeleted.Should().BeFalse();
+        }
+
+        [Fact]
+        public void Restore_RaisesEntityRestoredDomainEvent()
+        {
+            var user = CreateValidUser();
+            user.Delete();
+
+            user.Restore();
+
+            user.DomainEvents.Should().Contain(e => e is EntityRestoredDomainEvent);
         }
     }
 }

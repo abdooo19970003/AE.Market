@@ -39,6 +39,13 @@ namespace AE.Market.Infrastructure.Caching
             return Task.CompletedTask;
         }
 
+        public Task ClearAsync(bool allowFailSafe, CancellationToken cancellationToken)
+        {
+            if (cache is MemoryCache memoryCache)
+                memoryCache.Compact(1.0);
+            return Task.CompletedTask;
+        }
+
         public Task SetAsync<T>(
             string key,
             T value,

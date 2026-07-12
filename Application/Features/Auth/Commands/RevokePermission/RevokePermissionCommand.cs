@@ -2,4 +2,4 @@ using AE.Market.Application.Common.Abstracts;
 
 namespace AE.Market.Application.Features.Auth.Commands.RevokePermission;
 
-public sealed record RevokePermissionCommand(Guid UserId, Domain.Aggregates.Auth.Permission Permission) : ICommand;
+public sealed record RevokePermissionCommand(Guid UserId, string PermissionName) : ICommand;

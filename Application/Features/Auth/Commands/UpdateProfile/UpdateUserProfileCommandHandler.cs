@@ -3,7 +3,7 @@ using AE.Market.Application.Common.Mapping;
 using AE.Market.Application.Features.Auth.DTOs;
 using AE.Market.Domain.Aggregates.Auth;
 using AE.Market.Domain.Aggregates.Auth.Errors;
-using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using MediatR;
 
 namespace AE.Market.Application.Features.Auth.Commands.UpdateProfile;
@@ -32,10 +32,20 @@ internal sealed class UpdateUserProfileCommandHandler(
         if (request.PhoneNumber is not null)
             user.UpdateProfilePhone(request.PhoneNumber);
 
-        if (request.City is not null && request.Country is not null)
-            user.UpdateProfileAddress(request.City, request.Country, request.AddressLine);
-        else if (request.City is null && request.Country is null)
-            user.RemoveProfileAddress();
+        if (request.Addresses is not null)
+        {
+            user.ClearProfileAddresses();
+            foreach (var addr in request.Addresses)
+            {
+                user.AddProfileAddress(
+                    addr.Country,
+                    addr.City,
+                    addr.AddressLine,
+                    addr.Label,
+                    addr.IsPrimary,
+                    addr.Type);
+            }
+        }
 
         if (request.ProfileImageUrl is not null)
             user.UpdateProfileImage(request.ProfileImageUrl);

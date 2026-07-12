@@ -1,8 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using AE.Market.Application.Common.Abstracts;
 using AE.Market.Application.Services;
+using AE.Market.Domain.Common.Abstracts;
 using MediatR;
 
 namespace AE.Market.Application.Common.Behaviors
@@ -17,13 +18,26 @@ namespace AE.Market.Application.Common.Behaviors
             CancellationToken cancellationToken
         )
         {
-            TResponse result = await cache.GetOrCreateAsync(
+            TResponse? cached = await cache.GetAsync<TResponse>(
                 request.CacheKey,
-                 () => next(cancellationToken),
-                request.AbsoluteExpiration ?? TimeSpan.FromMinutes(60),
-                request.SlidingExpiration ,
                 cancellationToken
             );
+            if (cached is not null)
+                return cached;
+
+            var result = await next(cancellationToken);
+
+            if (result is Result { IsSuccess: false })
+                return result;
+
+            await cache.SetAsync(
+                request.CacheKey,
+                result,
+                request.AbsoluteExpiration ?? TimeSpan.FromMinutes(60),
+                request.SlidingExpiration,
+                cancellationToken
+            );
+
             return result;
         }
     }

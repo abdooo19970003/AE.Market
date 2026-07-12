@@ -1,5 +1,5 @@
 ﻿using AE.Market.Application.Common.Interfaces;
-using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using AE.Market.Domain.Common.Specifications;
 using Microsoft.EntityFrameworkCore;
 

@@ -8,8 +8,6 @@ public sealed record UserProfileDto
     public string? LastName { get; set; }
     public string FullName { get; set; } = string.Empty;
     public string? Phone { get; set; }
-    public string? City { get; set; }
-    public string? Country { get; set; }
-    public string? AddressLine { get; set; }
+    public List<AddressDto> Addresses { get; set; } = [];
     public string? ProfileImage { get; set; }
 }

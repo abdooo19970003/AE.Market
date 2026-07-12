@@ -23,7 +23,7 @@ namespace AE.Market.Infrastructure.Persistence.Configurations.Auth
             builder.Property(u => u.PasswordHash)
                 .HasConversion(v => v.Value, v => PasswordHash.FromHashedString(v).Value);
 
-            builder.HasQueryFilter("ActiveUsers", u => u.IsActive);
+            builder.HasQueryFilter(u => u.IsActive && !u.IsDeleted);
         }
     }
 }

@@ -5,7 +5,7 @@ using AE.Market.Application.Features.Auth.Specs;
 using AE.Market.Application.Services;
 using AE.Market.Domain.Aggregates.Auth;
 using AE.Market.Domain.Aggregates.Auth.Errors;
-using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using MediatR;
 
 namespace AE.Market.Application.Features.Auth.Queries.Me

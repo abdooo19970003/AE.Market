@@ -1,6 +1,6 @@
 ﻿using AE.Market.Application.Common.Abstracts;
 using AE.Market.Application.Common.Interfaces;
-using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using AE.Market.Domain.Exceptions;
 using MediatR;
 using System.Data;
@@ -34,7 +34,8 @@ namespace AE.Market.Application.Common.Behaviors
                     DomainException de => new(de.Code, de.Message),
                     _ => ApplicationErrors.ApplicationError(nameof(TransactionBehavior<,>), ex.Message),
                 };
-                var errorList = new List<Error> { new(ex.Source ?? "TransactionBehavior", ex.Message) };
+                var innerMsg = ex.InnerException?.Message ?? ex.Message;
+                var errorList = new List<Error> { new(ex.Source ?? "TransactionBehavior", innerMsg) };
                 if (typeof(TResponse).IsGenericType)
                 {
                     var resultType = typeof(TResponse).GetGenericArguments()[0];

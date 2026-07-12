@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 using AE.Market.Application.Common.Behaviors;
-using AE.Market.Domain.Common;
+using AE.Market.Domain.Common.Abstracts;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

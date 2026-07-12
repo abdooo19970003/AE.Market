@@ -5,6 +5,11 @@ namespace AE.Market.Infrastructure.Caching
 {
     internal sealed class FusionCachingService(IFusionCache cache) : ICacheService
     {
+        public async Task ClearAsync(bool allowFailSafe, CancellationToken cancellationToken)
+        {
+            await cache.ClearAsync(allowFailSafe, token: cancellationToken);
+        }
+
         public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken)
         {
             return await cache.GetOrDefaultAsync<T>(key,token:cancellationToken);

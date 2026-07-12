@@ -18,7 +18,7 @@ internal sealed class ProductVariantConfiguration : IEntityTypeConfiguration<Pro
             .HasMaxLength(50)
             .IsRequired();
         builder.Property(x => x.Status).HasConversion<int>().HasDefaultValue(ProductStatus.Active);
-        builder.Property(x => x.SalePrice).HasPrecision(18, 4);
+        builder.Property(x => x.ListPrice).HasPrecision(18, 4);
         builder.Property(x => x.StockQuantity).HasDefaultValue(0);
         builder.Property(x => x.ReservedQuantity).HasDefaultValue(0);
         builder.Property(x => x.RowVersion).HasColumnType("bytea");

@@ -530,11 +530,11 @@ public sealed class ProductTests
         }
 
         [Fact]
-        public void SetVariantSalePrice_UnknownVariantId_Throws()
+        public void SetVariantListPrice_UnknownVariantId_Throws()
         {
             var product = CreateValidProduct();
 
-            var act = () => product.SetVariantSalePrice(Guid.NewGuid(), 10m);
+            var act = () => product.SetVariantListPrice(Guid.NewGuid(), 10m);
 
             act.Should().Throw<DomainException>();
         }
@@ -567,13 +567,13 @@ public sealed class ProductTests
         }
 
         [Fact]
-        public void SetVariantSalePrice_RaisesVariantPriceChangedDomainEvent()
+        public void SetVariantListPrice_RaisesVariantPriceChangedDomainEvent()
         {
             var product = CreateValidProduct();
             var variant = product.AddVariant(Guid.NewGuid(), "Default", "SKU-DEF-001");
             product.ClearDomainEvents();
 
-            product.SetVariantSalePrice(variant.Id, 99.99m);
+            product.SetVariantListPrice(variant.Id, 99.99m);
 
             product.DomainEvents.Should().ContainSingle()
                 .Which.Should().BeOfType<VariantPriceChangedDomainEvent>()
@@ -1019,44 +1019,44 @@ public sealed class ProductTests
         }
     }
 
-    public sealed class SalePrice
+    public sealed class ListPrice
     {
         [Fact]
-        public void SalePrice_NoVariants_ReturnsZero()
+        public void ListPrice_NoVariants_ReturnsZero()
         {
             var product = Product.Create(
                 Guid.NewGuid(), "Test", "test", "SKU-001", Guid.NewGuid(), ProductType.Configurable);
 
-            product.SalePrice.Should().Be(0m);
+            product.ListPrice.Should().Be(0m);
         }
 
         [Fact]
-        public void SalePrice_ReturnsMinOfActiveVariantPrices()
+        public void ListPrice_ReturnsMinOfActiveVariantPrices()
         {
             var product = CreateValidProduct();
             var v1 = product.AddVariant(Guid.NewGuid(), "V1", "SKU-V1");
             var v2 = product.AddVariant(Guid.NewGuid(), "V2", "SKU-V2");
             product.ClearDomainEvents();
-            product.SetVariantSalePrice(v1.Id, 10m);
-            product.SetVariantSalePrice(v2.Id, 20m);
+            product.SetVariantListPrice(v1.Id, 10m);
+            product.SetVariantListPrice(v2.Id, 20m);
 
-            product.SalePrice.Should().Be(10m);
+            product.ListPrice.Should().Be(10m);
         }
 
         [Fact]
-        public void SalePrice_IgnoresInactiveVariants()
+        public void ListPrice_IgnoresInactiveVariants()
         {
             var product = CreateValidProduct();
             var v1 = product.AddVariant(Guid.NewGuid(), "V1", "SKU-V1");
             var v2 = product.AddVariant(Guid.NewGuid(), "V2", "SKU-V2");
             var v3 = product.AddVariant(Guid.NewGuid(), "V3", "SKU-V3");
             product.ClearDomainEvents();
-            product.SetVariantSalePrice(v1.Id, 10m);
-            product.SetVariantSalePrice(v2.Id, 20m);
-            product.SetVariantSalePrice(v3.Id, 30m);
+            product.SetVariantListPrice(v1.Id, 10m);
+            product.SetVariantListPrice(v2.Id, 20m);
+            product.SetVariantListPrice(v3.Id, 30m);
             v3.Deactivate();
 
-            product.SalePrice.Should().Be(10m);
+            product.ListPrice.Should().Be(10m);
         }
     }
 

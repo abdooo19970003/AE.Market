@@ -26,9 +26,7 @@ internal sealed class ProductPriceChangedHandler(
         if (product is null)
             return;
 
-        if (evt.Type == PriceType.Sale)
-            product.SetVariantSalePrice(evt.VariantId, evt.NewAmount.Amount);
-        else if (evt.Type == PriceType.List)
+        if (evt.Type == PriceType.List)
             product.SetVariantListPrice(evt.VariantId, evt.NewAmount.Amount);
     }
 }

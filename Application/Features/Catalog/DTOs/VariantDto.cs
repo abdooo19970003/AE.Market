@@ -7,7 +7,7 @@ public sealed record VariantDto
     public string Name { get; set; } = string.Empty;
     public string Sku { get; set; } = string.Empty;
     public string Status { get; set; } = "Active";
-    public decimal SalePrice { get; set; }
+    public decimal ListPrice { get; set; }
     public int StockQuantity { get; set; }
     public int ReservedQuantity { get; set; }
     public int AvailableQuantity { get; set; }

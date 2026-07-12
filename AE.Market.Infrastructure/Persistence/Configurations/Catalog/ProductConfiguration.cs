@@ -34,7 +34,7 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasMaxLength(50)
             .IsRequired();
 
-        builder.Ignore(x => x.SalePrice);
+        builder.Ignore(x => x.ListPrice);
         builder.Ignore(x => x.StockQuantity);
 
         builder.HasIndex(x => x.Slug).IsUnique();

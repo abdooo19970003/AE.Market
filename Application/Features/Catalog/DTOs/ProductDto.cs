@@ -11,7 +11,7 @@ public sealed record ProductDto
     public string? ShortDescription { get; set; }
     public string? LongDescription { get; set; }
     public string Status { get; set; } = "Active";
-    public decimal SalePrice { get; set; }
+    public decimal ListPrice { get; set; }
     public int StockQuantity { get; set; }
     public bool AllowBackOrder { get; set; }
     public int? BackOrderLimit { get; set; }

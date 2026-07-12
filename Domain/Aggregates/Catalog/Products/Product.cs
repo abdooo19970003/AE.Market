@@ -59,8 +59,8 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     private readonly List<ProductRelation> _relations = [];
     public IReadOnlyCollection<ProductRelation> Relations => _relations.AsReadOnly();
 
-    public decimal SalePrice =>
-        _variants.Where(v => v.Status == ProductStatus.Active && v.SalePrice > 0).Min(v => (decimal?)v.SalePrice) ?? 0m;
+    public decimal ListPrice =>
+        _variants.Where(v => v.Status == ProductStatus.Active && v.ListPrice > 0).Min(v => (decimal?)v.ListPrice) ?? 0m;
     public int StockQuantity => _variants.Sum(v => v.StockQuantity);
 
     // FOR Bundles
@@ -450,21 +450,6 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
         UpdateLastModified();
     }
 
-    public void SetVariantSalePrice(Guid variantId, decimal price)
-    {
-        var variant = _variants.FirstOrDefault(v => v.Id == variantId);
-        if (variant is null)
-            throw new DomainException(
-                CatalogErrors.VariantNotFound.Code,
-                CatalogErrors.VariantNotFound.Message
-            );
-
-        var oldPrice = variant.SalePrice;
-        variant.SetOrUpdateSellingPrice(price);
-        AddDomainEvent(new VariantPriceChangedDomainEvent(Id, variantId, oldPrice, price));
-        UpdateLastModified();
-    }
-
     public void SetVariantListPrice(Guid variantId, decimal price)
     {
         var variant = _variants.FirstOrDefault(v => v.Id == variantId);
@@ -474,7 +459,9 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
                 CatalogErrors.VariantNotFound.Message
             );
 
+        var oldPrice = variant.ListPrice;
         variant.SetOrUpdateListPrice(price);
+        AddDomainEvent(new VariantPriceChangedDomainEvent(Id, variantId, oldPrice, price));
         UpdateLastModified();
     }
 

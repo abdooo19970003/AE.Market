@@ -21,9 +21,9 @@ namespace AE.Market.API.Controllers;
 public sealed class PricingController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetActivePrice(Guid productId, Guid variantId, CancellationToken ct)
+    public async Task<IActionResult> GetActivePrice(Guid productId, Guid variantId, [FromQuery] Guid? marketplaceId, CancellationToken ct)
     {
-        var result = await mediator.Send(new GetActivePriceQuery(variantId), ct);
+        var result = await mediator.Send(new GetActivePriceQuery(variantId, marketplaceId), ct);
         return result.ToNotFoundActionResult();
     }
 
@@ -89,9 +89,10 @@ public sealed class PricingController(IMediator mediator) : ControllerBase
         Guid productId,
         Guid variantId,
         [FromQuery] PriceType type,
+        [FromQuery] Guid? marketplaceId,
         CancellationToken ct)
     {
-        var result = await mediator.Send(new DeletePriceCommand(variantId, type), ct);
+        var result = await mediator.Send(new DeletePriceCommand(variantId, marketplaceId, type), ct);
         return result.ToActionResult();
     }
 
@@ -118,9 +119,10 @@ public sealed class PricingController(IMediator mediator) : ControllerBase
         Guid productId,
         Guid variantId,
         [FromQuery] PriceType type,
+        [FromQuery] Guid? marketplaceId,
         CancellationToken ct)
     {
-        var result = await mediator.Send(new DeactivatePriceCommand(variantId, type), ct);
+        var result = await mediator.Send(new DeactivatePriceCommand(variantId, marketplaceId, type), ct);
         return result.ToActionResult();
     }
 }

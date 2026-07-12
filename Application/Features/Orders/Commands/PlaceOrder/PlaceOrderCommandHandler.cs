@@ -47,7 +47,7 @@ internal sealed class PlaceOrderCommandHandler(
 
         var variantIds = cart.Items.Select(i => i.VariantId).ToList();
         var variants = await variantRepo.ListWithSpecAsync(new VariantsByIdsSpec(variantIds), ct);
-        var prices = await priceRepo.ListWithSpecAsync(new ActivePricesByVariantIdsSpec(variantIds), ct);
+        var prices = await priceRepo.ListWithSpecAsync(new ActivePricesByVariantIdsSpec(variantIds, null), ct);
 
         var variantMap = variants.ToDictionary(v => v.Id);
         var priceMap = prices.ToDictionary(p => p.VariantId);

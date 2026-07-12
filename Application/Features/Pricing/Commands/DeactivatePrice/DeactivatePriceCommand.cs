@@ -3,4 +3,4 @@ using AE.Market.Domain.Aggregates.Prices;
 
 namespace AE.Market.Application.Features.Pricing.Commands.DeactivatePrice;
 
-public sealed record DeactivatePriceCommand(Guid VariantId, PriceType Type) : ICommand;
+public sealed record DeactivatePriceCommand(Guid VariantId, Guid? MarketplaceId, PriceType Type) : ICommand;

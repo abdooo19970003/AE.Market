@@ -19,7 +19,7 @@ internal sealed class SetInitialPriceCommandHandler(
     public async Task<Result<PriceDto>> Handle(SetInitialPriceCommand request, CancellationToken cancellationToken)
     {
         var existingActive = await priceRepo.FirstOrDefaultAsync(
-            new ActivePriceByVariantAndTypeSpec(request.VariantId, request.Type),
+            new ActivePriceByVariantAndTypeSpec(request.VariantId, request.MarketplaceId, request.Type),
             cancellationToken);
 
         if (existingActive is not null)

@@ -17,7 +17,7 @@ internal sealed class GetActivePriceQueryHandler(
     public async Task<Result<PriceDto>> Handle(GetActivePriceQuery request, CancellationToken cancellationToken)
     {
         var price = await repo.FirstOrDefaultAsync(
-            new ActivePriceByVariantSpec(request.VariantId),
+            new ActivePriceByVariantSpec(request.VariantId, request.MarketplaceId),
             cancellationToken);
 
         if (price is null)

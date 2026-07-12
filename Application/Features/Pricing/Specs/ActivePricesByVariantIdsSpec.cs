@@ -5,8 +5,8 @@ namespace AE.Market.Application.Features.Pricing.Specs;
 
 public sealed class ActivePricesByVariantIdsSpec : BaseSpecification<Price>
 {
-    public ActivePricesByVariantIdsSpec(IReadOnlyList<Guid> variantIds)
-        : base(p => variantIds.Contains(p.VariantId) && p.ValidTo == null && !p.IsDeleted)
+    public ActivePricesByVariantIdsSpec(IReadOnlyList<Guid> variantIds, Guid? marketplaceId)
+        : base(p => variantIds.Contains(p.VariantId) && p.MarketplaceId == marketplaceId && p.ValidTo == null && !p.IsDeleted)
     {
     }
 }

@@ -13,6 +13,7 @@ internal sealed class PriceConfiguration : IEntityTypeConfiguration<Price>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.VariantId).IsRequired();
+        builder.Property(x => x.MarketplaceId);
         builder.Property(x => x.Type).HasConversion<int>().IsRequired();
 
         builder.OwnsOne(x => x.PriceAmount, priceBuilder =>

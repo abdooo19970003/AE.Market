@@ -9,7 +9,7 @@ namespace AE.Market.Domain.Aggregates.Prices;
 public sealed class Price : BaseEntity, IAggregateRoot
 {
     public Guid VariantId { get; private set; }
-    public Guid MarketplaceId { get; private set; }
+    public Guid? MarketplaceId { get; private set; }
     public PriceType Type { get; private set; }
     public Money PriceAmount { get; private set; } = default!;
     public DateTime? ValidFrom { get; private set; }
@@ -20,7 +20,7 @@ public sealed class Price : BaseEntity, IAggregateRoot
     private Price(
         Guid id,
         Guid variantId,
-        Guid marketplaceId,
+        Guid? marketplaceId,
         PriceType type,
         Money priceAmount,
         DateTime? validFrom,
@@ -39,7 +39,7 @@ public sealed class Price : BaseEntity, IAggregateRoot
     public static Price Create(
         Guid id,
         Guid variantId,
-        Guid marketplaceId,
+        Guid? marketplaceId,
         PriceType type,
         Money priceAmount,
         DateTime? validFrom = null,

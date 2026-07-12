@@ -28,6 +28,16 @@ public sealed class PriceTests
     }
 
     [Fact]
+    public void Create_WithNullMarketplaceId_ReturnsPriceWithNullMarketplaceId()
+    {
+        var money = Money.Create(29.99m, Currency.USD);
+
+        var price = Price.Create(Guid.NewGuid(), VariantId, null, PriceType.Sale, money);
+
+        price.MarketplaceId.Should().BeNull();
+    }
+
+    [Fact]
     public void Create_WithZeroAmount_ThrowsDomainException()
     {
         var money = Money.Zero(Currency.USD);

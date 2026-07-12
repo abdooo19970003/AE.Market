@@ -6,7 +6,7 @@ namespace AE.Market.Application.Features.Pricing.Commands.SetInitialPrice;
 
 public sealed record SetInitialPriceCommand(
     Guid VariantId,
-    Guid MarketplaceId,
+    Guid? MarketplaceId,
     PriceType Type,
     decimal Amount,
     string CurrencyCode

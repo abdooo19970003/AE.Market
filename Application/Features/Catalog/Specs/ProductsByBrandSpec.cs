@@ -21,7 +21,7 @@ public sealed class ProductsByBrandSpec : BaseSpecification<Product>
             var orderExpr = sortBy.ToLowerInvariant() switch
             {
                 "name" => (System.Linq.Expressions.Expression<Func<Product, object>>)(p => p.Name),
-                "price" => p => p.SalePrice,
+                "price" => p => p.ListPrice,
                 "created" => p => p.CreatedAt,
                 _ => p => p.CreatedAt
             };

@@ -5,16 +5,16 @@ namespace AE.Market.Application.Features.Pricing.Specs;
 
 public sealed class ActivePriceByVariantSpec : BaseSpecification<Price>
 {
-    public ActivePriceByVariantSpec(Guid variantId)
-        : base(p => p.VariantId == variantId && p.ValidTo == null && !p.IsDeleted)
+    public ActivePriceByVariantSpec(Guid variantId, Guid? marketplaceId)
+        : base(p => p.VariantId == variantId && p.MarketplaceId == marketplaceId && p.ValidTo == null && !p.IsDeleted)
     {
     }
 }
 
 public sealed class ActivePriceByVariantAndTypeSpec : BaseSpecification<Price>
 {
-    public ActivePriceByVariantAndTypeSpec(Guid variantId, PriceType type)
-        : base(p => p.VariantId == variantId && p.Type == type && p.ValidTo == null && !p.IsDeleted)
+    public ActivePriceByVariantAndTypeSpec(Guid variantId, Guid? marketplaceId, PriceType type)
+        : base(p => p.VariantId == variantId && p.MarketplaceId == marketplaceId && p.Type == type && p.ValidTo == null && !p.IsDeleted)
     {
     }
 }
@@ -73,8 +73,8 @@ public sealed class SalePriceByVariantSpec : BaseSpecification<Price>
 
 public sealed class InactivePriceByVariantAndTypeSpec : BaseSpecification<Price>
 {
-    public InactivePriceByVariantAndTypeSpec(Guid variantId, PriceType type)
-        : base(p => p.VariantId == variantId && p.Type == type && p.ValidTo != null && !p.IsDeleted)
+    public InactivePriceByVariantAndTypeSpec(Guid variantId, Guid? marketplaceId, PriceType type)
+        : base(p => p.VariantId == variantId && p.MarketplaceId == marketplaceId && p.Type == type && p.ValidTo != null && !p.IsDeleted)
     {
         SetOrderBy(p => p.CreatedAt, desc: true);
     }

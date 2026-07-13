@@ -372,12 +372,12 @@ public sealed class ProductVariantTests
         }
 
         [Fact]
-        public void SetOrUpdateSellingPrice_ViaProduct_DoesNotRaiseEventOnVariant()
+        public void SetOrUpdateListPrice_ViaProduct_DoesNotRaiseEventOnVariant()
         {
             var product = CreateProductWithVariant(out var variant);
             product.ClearDomainEvents();
 
-            product.SetVariantSalePrice(variant.Id, 299.99m);
+            product.SetVariantListPrice(variant.Id, 299.99m);
 
             variant.DomainEvents.Should().BeEmpty();
             product.DomainEvents.Should().ContainSingle()

@@ -24,5 +24,7 @@ public sealed class DbSeeder(AppDbContext db, IPasswordService passwordService)
         db.GroupUnits.AddRange(GroupUnitSeeder.GetSeedData());
 
         await db.SaveChangesAsync();
+
+        await MarketplaceSeeder.SeedAsync(db);
     }
 }

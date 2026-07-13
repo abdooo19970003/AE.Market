@@ -19,14 +19,14 @@ internal sealed class SetInitialPriceCommandHandler(
     public async Task<Result<PriceDto>> Handle(SetInitialPriceCommand request, CancellationToken cancellationToken)
     {
         var existingActive = await priceRepo.FirstOrDefaultAsync(
-            new ActivePriceByVariantAndTypeSpec(request.VariantId, request.Type),
+            new ActivePriceByVariantAndTypeSpec(request.VariantId, request.MarketplaceId, request.Type),
             cancellationToken);
 
         if (existingActive is not null)
             return Result<PriceDto>.Fail(PriceErrors.DuplicateActiveSalePrice);
 
         var money = Money.FromDecimal(request.Amount, request.CurrencyCode);
-        var price = Price.Create(Guid.NewGuid(), request.VariantId, request.Type, money);
+        var price = Price.Create(Guid.NewGuid(), request.VariantId, request.MarketplaceId, request.Type, money);
 
         await priceRepo.AddAsync(price, cancellationToken);
 

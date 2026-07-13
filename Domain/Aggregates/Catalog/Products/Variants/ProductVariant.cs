@@ -13,7 +13,6 @@ public sealed class ProductVariant : BaseEntity, IMetaData
     public ProductStatus Status { get; private set; } = ProductStatus.Active;
     public Guid ProductId { get; private set; }
 
-    public decimal SalePrice { get; private set; }
     public decimal ListPrice { get; private set; }
     public int StockQuantity { get; private set; }
     public int ReservedQuantity { get; private set; }
@@ -172,12 +171,6 @@ public sealed class ProductVariant : BaseEntity, IMetaData
     {
         image.Delete();
         _images.Remove(image);
-        UpdateLastModified();
-    }
-
-    internal void SetOrUpdateSellingPrice(decimal price)
-    {
-        SalePrice = price;
         UpdateLastModified();
     }
 

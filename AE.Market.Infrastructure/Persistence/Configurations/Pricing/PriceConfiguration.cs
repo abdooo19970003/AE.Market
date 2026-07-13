@@ -13,6 +13,7 @@ internal sealed class PriceConfiguration : IEntityTypeConfiguration<Price>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.VariantId).IsRequired();
+        builder.Property(x => x.MarketplaceId);
         builder.Property(x => x.Type).HasConversion<int>().IsRequired();
 
         builder.OwnsOne(x => x.PriceAmount, priceBuilder =>
@@ -34,9 +35,9 @@ internal sealed class PriceConfiguration : IEntityTypeConfiguration<Price>
         builder.Property(x => x.ValidFrom);
         builder.Property(x => x.ValidTo);
 
-        builder.HasIndex(x => new { x.VariantId, x.Type, x.ValidTo })
+        builder.HasIndex(x => new { x.VariantId, x.Type, x.MarketplaceId, x.ValidTo })
             .HasFilter("\"ValidTo\" IS NULL")
             .IsUnique()
-            .HasDatabaseName("ix_prices_active_price_per_variant_type");
+            .HasDatabaseName("ix_prices_active_price_per_variant_type_marketplace");
     }
 }

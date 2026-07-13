@@ -20,7 +20,7 @@ internal sealed class UpdatePriceCommandHandler(
     public async Task<Result<PriceDto>> Handle(UpdatePriceCommand request, CancellationToken cancellationToken)
     {
         var activePrice = await priceRepo.FirstOrDefaultAsync(
-            new ActivePriceByVariantAndTypeSpec(request.VariantId, request.Type),
+            new ActivePriceByVariantAndTypeSpec(request.VariantId, request.MarketplaceId, request.Type),
             cancellationToken);
 
         if (activePrice is null)
@@ -32,6 +32,7 @@ internal sealed class UpdatePriceCommandHandler(
         var newPrice = Price.Create(
             Guid.NewGuid(),
             request.VariantId,
+            request.MarketplaceId,
             request.Type,
             newMoney);
 

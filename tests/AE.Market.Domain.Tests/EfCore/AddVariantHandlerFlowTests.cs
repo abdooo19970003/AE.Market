@@ -90,7 +90,7 @@ public sealed class AddVariantHandlerFlowTests
                     .HasConversion(v => v.Value, v => Sku.Create(v));
                 e.Property(x => x.Slug)
                     .HasConversion(v => v.Value, v => Slug.Create(v));
-                e.Ignore(x => x.SalePrice);
+                e.Ignore(x => x.ListPrice);
                 e.Ignore(x => x.StockQuantity);
                 e.Ignore(x => x.Images);
                 e.Ignore(x => x.Tags);

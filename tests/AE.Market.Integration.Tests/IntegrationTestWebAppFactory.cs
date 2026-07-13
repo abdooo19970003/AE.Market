@@ -1,6 +1,7 @@
 using AE.Market.API;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
 
@@ -45,6 +46,11 @@ public sealed class IntegrationTestWebAppFactory : IAsyncLifetime
 
         await _app.StartAsync();
         HttpClient = _app.GetTestClient();
+    }
+
+    public IServiceScope CreateScope()
+    {
+        return _app!.Services.CreateScope();
     }
 
     public async Task DisposeAsync()

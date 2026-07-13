@@ -6,6 +6,7 @@ namespace AE.Market.Application.Features.Pricing.Commands.UpdatePrice;
 
 public sealed record UpdatePriceCommand(
     Guid VariantId,
+    Guid? MarketplaceId,
     PriceType Type,
     decimal Amount,
     string CurrencyCode,

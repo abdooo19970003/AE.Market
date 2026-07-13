@@ -14,7 +14,7 @@ internal sealed class DeletePriceCommandHandler(
     public async Task<Result> Handle(DeletePriceCommand request, CancellationToken cancellationToken)
     {
         var price = await repo.FirstOrDefaultAsync(
-            new ActivePriceByVariantAndTypeSpec(request.VariantId, request.Type),
+            new ActivePriceByVariantAndTypeSpec(request.VariantId, request.MarketplaceId, request.Type),
             cancellationToken);
 
         if (price is null)

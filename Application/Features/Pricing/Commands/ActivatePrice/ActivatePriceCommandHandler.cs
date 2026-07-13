@@ -14,7 +14,7 @@ internal sealed class ActivatePriceCommandHandler(
     public async Task<Result> Handle(ActivatePriceCommand request, CancellationToken cancellationToken)
     {
         var price = await repo.GetBySpecWithTrackingAsync(
-            new InactivePriceByVariantAndTypeSpec(request.VariantId, request.Type),
+            new InactivePriceByVariantAndTypeSpec(request.VariantId, request.MarketplaceId, request.Type),
             cancellationToken);
 
         if (price is null)

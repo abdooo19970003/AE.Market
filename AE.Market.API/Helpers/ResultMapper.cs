@@ -87,6 +87,8 @@ namespace AE.Market.API.Helpers
                 return StatusCodes.Status400BadRequest;
             if (error.Code.StartsWith("Application.Internal.", StringComparison.OrdinalIgnoreCase))
                 return StatusCodes.Status500InternalServerError;
+            if (error.Code.StartsWith("Application.Elasticsearch", StringComparison.OrdinalIgnoreCase))
+                return StatusCodes.Status503ServiceUnavailable;
 
             return StatusCodes.Status400BadRequest;
         }
@@ -97,6 +99,7 @@ namespace AE.Market.API.Helpers
             StatusCodes.Status404NotFound => "Not Found",
             StatusCodes.Status409Conflict => "Conflict",
             StatusCodes.Status500InternalServerError => "Internal Server Error",
+            StatusCodes.Status503ServiceUnavailable => "Service Unavailable",
             _ => "Error"
         };
     }

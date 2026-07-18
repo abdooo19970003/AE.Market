@@ -6,6 +6,7 @@ public interface IElasticsearchService
 {
     Task<EnsureIndicesResult> EnsureIndicesAsync(CancellationToken ct = default);
     Task<SearchProductsResult> SearchProductsAsync(SearchProductsQuery query, CancellationToken ct = default);
+    Task<SearchBrandsResult> SearchBrandsAsync(SearchBrandsQuery query, CancellationToken ct = default);
     Task<SearchSuggestResult> SearchSuggestAsync(SearchSuggestQuery query, CancellationToken ct = default);
     Task IndexProductAsync(ProductDocument document, CancellationToken ct = default);
     Task UpdateProductAsync(Guid productId, ProductDocument document, CancellationToken ct = default);

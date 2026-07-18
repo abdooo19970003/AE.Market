@@ -16,6 +16,13 @@ public sealed class SearchController(IMediator mediator) : ControllerBase
         return result.ToActionResult();
     }
 
+    [HttpGet("brands")]
+    public async Task<IActionResult> SearchBrands([FromQuery] SearchBrandsQuery query, CancellationToken ct)
+    {
+        var result = await mediator.Send(query, ct);
+        return result.ToActionResult();
+    }
+
     [HttpGet("suggest")]
     public async Task<IActionResult> Suggest([FromQuery] SearchSuggestQuery query, CancellationToken ct)
     {

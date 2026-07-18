@@ -114,9 +114,48 @@ internal sealed class ElasticsearchService(
         };
     }
 
+    public async Task<SearchBrandsResult> SearchBrandsAsync(SearchBrandsQuery query, CancellationToken ct = default)
+    {
+        var response = await client.SearchAsync<BrandDocument>(s => s
+            .Index(BrandIndexDefinition.IndexName)
+            .TrackTotalHits(new TrackHits(true))
+            .Query(BuildBrandSearchQuery(query))
+            .From((query.Page - 1) * query.Size)
+            .Size(query.Size), ct);
+
+        if (!response.IsValidResponse)
+        {
+            var error = response.ElasticsearchServerError?.Error?.Reason ?? "Unknown ES error";
+            logger.LogError("ES brand search failed: {Error}", error);
+            throw new InvalidOperationException($"Elasticsearch brand search failed: {error}");
+        }
+
+        var hits = response.Hits;
+        var total = (int)response.Total;
+
+        var items = hits.Select(h => new SearchBrandsResultItem
+        {
+            Id = Guid.Parse(h.Id),
+            Name = h.Source!.Name,
+            Slug = h.Source.Slug,
+            ShortDescription = h.Source.ShortDescription,
+            LogoUrl = h.Source.LogoUrl,
+            IsActive = h.Source.IsActive,
+            ProductCount = h.Source.ProductCount
+        }).ToList();
+
+        return new SearchBrandsResult
+        {
+            Items = items,
+            TotalCount = total,
+            Page = query.Page,
+            Size = query.Size
+        };
+    }
+
     public async Task<SearchSuggestResult> SearchSuggestAsync(SearchSuggestQuery query, CancellationToken ct = default)
     {
-        var response = await client.SearchAsync<ProductDocument>(s => s
+        var productTask = client.SearchAsync<ProductDocument>(s => s
             .Index(ProductIndexDefinition.IndexName)
             .Suggest(su => su
                 .Text(query.Q)
@@ -133,16 +172,39 @@ internal sealed class ElasticsearchService(
             )
             .Size(0), ct);
 
-        if (!response.IsValidResponse)
-        {
-            throw new InvalidOperationException($"Elasticsearch suggest failed: {response.ElasticsearchServerError?.Error?.Reason}");
-        }
+        var brandTask = client.SearchAsync<BrandDocument>(s => s
+            .Index(BrandIndexDefinition.IndexName)
+            .Suggest(su => su
+                .Text(query.Q)
+                .Suggesters(sg => sg
+                    .Add("brand-suggest", sf => sf
+                        .Prefix(query.Q)
+                        .Completion(c => c
+                            .Field(new Field("name.suggest"))
+                            .Fuzzy(f => f.Fuzziness(new Fuzziness("AUTO")))
+                            .Size(query.Size)
+                        )
+                    )
+                )
+            )
+            .Size(0), ct);
+
+        await Task.WhenAll(productTask, brandTask);
+
+        var productResponse = productTask.Result;
+        var brandResponse = brandTask.Result;
+
+        if (!productResponse.IsValidResponse)
+            throw new InvalidOperationException($"Elasticsearch product suggest failed: {productResponse.ElasticsearchServerError?.Error?.Reason}");
+        if (!brandResponse.IsValidResponse)
+            throw new InvalidOperationException($"Elasticsearch brand suggest failed: {brandResponse.ElasticsearchServerError?.Error?.Reason}");
 
         var suggestions = new List<SuggestionItem>();
-        var suggestResults = response.Suggest?.GetCompletion("product-suggest");
-        if (suggestResults is not null)
+
+        var productSuggestions = productResponse.Suggest?.GetCompletion("product-suggest");
+        if (productSuggestions is not null)
         {
-            foreach (var suggestion in suggestResults.SelectMany(s => s.Options))
+            foreach (var suggestion in productSuggestions.SelectMany(s => s.Options))
             {
                 suggestions.Add(new SuggestionItem
                 {
@@ -151,6 +213,21 @@ internal sealed class ElasticsearchService(
                 });
             }
         }
+
+        var brandSuggestions = brandResponse.Suggest?.GetCompletion("brand-suggest");
+        if (brandSuggestions is not null)
+        {
+            foreach (var suggestion in brandSuggestions.SelectMany(s => s.Options))
+            {
+                suggestions.Add(new SuggestionItem
+                {
+                    Text = suggestion.Text ?? "",
+                    Score = (float)(suggestion.Score ?? 0)
+                });
+            }
+        }
+
+        suggestions = suggestions.OrderByDescending(s => s.Score).Take(query.Size).ToList();
 
         return new SearchSuggestResult { Suggestions = suggestions };
     }
@@ -322,6 +399,30 @@ internal sealed class ElasticsearchService(
         {
             Must = mustClauses,
             Filter = filterClauses
+        };
+    }
+
+    private static Query BuildBrandSearchQuery(SearchBrandsQuery query)
+    {
+        var mustClauses = new List<Query>();
+
+        if (!string.IsNullOrWhiteSpace(query.Q))
+        {
+            mustClauses.Add(new MultiMatchQuery
+            {
+                Query = query.Q,
+                Fields = new[] { "name^3", "name.ngram^2", "shortDescription^2", "longDescription" },
+                Fuzziness = new Fuzziness("AUTO")
+            });
+        }
+        else
+        {
+            mustClauses.Add(new MatchAllQuery());
+        }
+
+        return new BoolQuery
+        {
+            Must = mustClauses
         };
     }
 

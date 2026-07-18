@@ -104,5 +104,34 @@ public sealed class SearchBehaviorTests
             Times.Once);
     }
 
+    [Fact]
+    public async Task Handle_search_brands_query_calls_elasticsearch()
+    {
+        var query = new SearchBrandsQuery { Q = "apple" };
+        var brandResult = new SearchBrandsResult
+        {
+            Items = [new SearchBrandsResultItem { Id = Guid.NewGuid(), Name = "Apple", ProductCount = 5 }],
+            TotalCount = 1
+        };
+        _esServiceMock
+            .Setup(x => x.SearchBrandsAsync(query, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(brandResult);
+
+        RequestHandlerDelegate<Result<SearchBrandsResult>> next =
+            _ => throw new InvalidOperationException("Next should not be called for search queries");
+
+        var behavior = new SearchBehavior<SearchBrandsQuery, Result<SearchBrandsResult>>(
+            _esServiceMock.Object, _currentUserMock.Object);
+
+        var result = await behavior.Handle(query, next, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.TotalCount.Should().Be(1);
+        result.Value.Items.Should().HaveCount(1);
+        _esServiceMock.Verify(
+            x => x.SearchBrandsAsync(query, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
     private sealed class NonSearchQuery : IRequest<Result<string>>;
 }

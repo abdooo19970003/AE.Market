@@ -22,6 +22,9 @@ internal sealed class SearchBehavior<TRequest, TResponse>(
         if (request is SearchProductsQuery productsQuery)
             return await HandleSearchProducts(productsQuery, cancellationToken);
 
+        if (request is SearchBrandsQuery brandsQuery)
+            return await HandleSearchBrands(brandsQuery, cancellationToken);
+
         if (request is SearchSuggestQuery suggestQuery)
             return await HandleSearchSuggest(suggestQuery, cancellationToken);
 
@@ -37,6 +40,12 @@ internal sealed class SearchBehavior<TRequest, TResponse>(
         _ = LogAnalyticsAsync(query.Q ?? "", query, result.TotalCount, sw.ElapsedMilliseconds, ct);
 
         return (TResponse)(object)Result<SearchProductsResult>.Success(result);
+    }
+
+    private async Task<TResponse> HandleSearchBrands(SearchBrandsQuery query, CancellationToken ct)
+    {
+        var result = await esService.SearchBrandsAsync(query, ct);
+        return (TResponse)(object)Result<SearchBrandsResult>.Success(result);
     }
 
     private async Task<TResponse> HandleSearchSuggest(SearchSuggestQuery query, CancellationToken ct)

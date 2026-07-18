@@ -34,7 +34,19 @@ services:
       - "5341:5341"     # Port for ingestion (API keys / logging)
     volumes:
       - seq_data:/data
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
 volumes:
   redis-data:
   postgres_data:
   seq_data:
+  esdata:

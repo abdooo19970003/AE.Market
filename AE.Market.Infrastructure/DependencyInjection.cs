@@ -20,6 +20,8 @@ using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Backplane.StackExchangeRedis;
 using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
 using AE.Market.Infrastructure.Persistence.Seeders;
+using AE.Market.Infrastructure.Search;
+using Elastic.Clients.Elasticsearch;
 
 namespace AE.Market.Infrastructure
 {
@@ -34,7 +36,8 @@ namespace AE.Market.Infrastructure
                 .AddDatabases(configuration)
                 .AddOutbox()
                 .AddCache(configuration)
-                .AddAuth(configuration);
+                .AddAuth(configuration)
+                .AddSearch(configuration);
 
             return services;
         }
@@ -89,6 +92,23 @@ namespace AE.Market.Infrastructure
                     );
             });
             services.AddQuartzHostedService();
+            return services;
+        }
+
+        private static IServiceCollection AddSearch(this IServiceCollection services, IConfiguration configuration)
+        {
+            var uri = configuration["Elasticsearch:Uri"] ?? "http://localhost:9200";
+            var defaultIndex = configuration["Elasticsearch:DefaultIndex"] ?? "products";
+
+            var settings = new ElasticsearchClientSettings(new Uri(uri))
+                .DefaultIndex(defaultIndex)
+                .EnableDebugMode()
+                .PrettyJson();
+
+            var client = new ElasticsearchClient(settings);
+            services.AddSingleton(client);
+            services.AddScoped<IElasticsearchService, ElasticsearchService>();
+
             return services;
         }
 

@@ -90,6 +90,14 @@ namespace AE.Market.Infrastructure
                                 schedule.WithIntervalInSeconds(100).RepeatForever()
                             )
                     );
+
+                var syncJobKey = new JobKey(nameof(SyncProductsJob));
+                cfg.AddJob<SyncProductsJob>(syncJobKey)
+                    .AddTrigger(trigger =>
+                        trigger
+                            .ForJob(syncJobKey)
+                            .WithCronSchedule("0 0 2 * * ?")
+                    );
             });
             services.AddQuartzHostedService();
             return services;

@@ -25,7 +25,8 @@ public sealed class IntegrationTestWebAppFactory : IAsyncLifetime
         .WithImage("redis:7")
         .Build();
 
-    private readonly ElasticsearchContainer _elasticsearch = new ElasticsearchBuilder("docker.elastic.co/elasticsearch/elasticsearch:8.14.0")
+    private readonly ElasticsearchContainer _elasticsearch = new ElasticsearchBuilder()
+        .WithImage("docker.elastic.co/elasticsearch/elasticsearch:8.14.0")
         .WithEnvironment("discovery.type", "single-node")
         .WithEnvironment("xpack.security.enabled", "false")
         .Build();

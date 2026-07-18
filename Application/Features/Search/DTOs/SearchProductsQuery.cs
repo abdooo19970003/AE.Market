@@ -1,6 +1,8 @@
+using AE.Market.Application.Common.Abstracts;
+
 namespace AE.Market.Application.Features.Search.DTOs;
 
-public sealed record SearchProductsQuery
+public sealed record SearchProductsQuery : ISearchQuery<SearchProductsResult>
 {
     public string? Q { get; init; }
     public Guid? CategoryId { get; init; }

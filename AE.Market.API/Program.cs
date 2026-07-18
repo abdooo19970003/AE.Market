@@ -97,6 +97,14 @@ namespace AE.Market.API
             app.UseAuthorization();
             app.MapControllers();
 
+            // Ensure ES indices exist on startup
+            if (app.Environment.IsDevelopment())
+            {
+                using var scope = app.Services.CreateScope();
+                var esService = scope.ServiceProvider.GetRequiredService<IElasticsearchService>();
+                esService.EnsureIndicesAsync().GetAwaiter().GetResult();
+            }
+
             return app;
         }
     }

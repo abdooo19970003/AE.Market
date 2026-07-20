@@ -28,6 +28,7 @@ internal sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(x => x.MetaDescription).HasMaxLength(500);
         builder.Property(x => x.MetaKeywords).HasMaxLength(500);
         builder.Property(x => x.OgImage).HasMaxLength(2048);
+        builder.Property(x => x.ViewCount).HasDefaultValue(0);
         builder.Property(x => x.TaxCodeId).IsRequired();
 
         builder.Property(x => x.Sku)

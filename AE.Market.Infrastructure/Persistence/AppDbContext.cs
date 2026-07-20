@@ -7,6 +7,7 @@ using AE.Market.Domain.Aggregates.Catalog.Products.Variants;
 using AE.Market.Domain.Aggregates.Catalog.Units;
 using AE.Market.Domain.Aggregates.Cart;
 using AE.Market.Domain.Aggregates.Orders;
+using AE.Market.Domain.Aggregates.Analytics;
 using AE.Market.Domain.Aggregates.Inventory;
 using AE.Market.Domain.Aggregates.Pricing;
 using AE.Market.Domain.Aggregates.Prices;
@@ -64,6 +65,9 @@ namespace AE.Market.Infrastructure.Persistence
 
         // Inventory Schema
         public DbSet<InventoryItem> InventoryItems { get; set; }
+
+        // Analytics Schema
+        public DbSet<SearchAnalytics> SearchAnalytics { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -7,7 +7,7 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next)
         var headers = context.Response.Headers;
 
         headers["Content-Security-Policy"] =
-            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'";
+            "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; connect-src 'self'; frame-ancestors 'none'";
         headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
         headers["X-Frame-Options"] = "DENY";
         headers["X-Content-Type-Options"] = "nosniff";

@@ -1,4 +1,5 @@
 using AE.Market.API.Authentication;
+using AE.Market.API.Configuration;
 using AE.Market.API.Exceptions;
 using AE.Market.API.Middlewares;
 using AE.Market.Application;
@@ -60,6 +61,28 @@ namespace AE.Market.API
             builder.Services.AddApplicationServices();
             builder.Services.AddInfrastructureServices(builder.Configuration);
 
+            // Security: CORS
+            var corsOptions = new CorsOptions();
+            builder.Configuration.GetSection("Cors").Bind(corsOptions);
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AdminPolicy", policy =>
+                    policy.WithOrigins(corsOptions.AdminOrigins)
+                          .AllowAnyMethod()
+                          .AllowAnyHeader());
+
+                options.AddPolicy("PublicPolicy", policy =>
+                    policy.WithOrigins(corsOptions.PublicOrigins)
+                          .WithMethods("GET")
+                          .AllowAnyHeader());
+
+                options.AddPolicy("DefaultPolicy", policy =>
+                    policy.WithOrigins(corsOptions.DefaultOrigins)
+                          .AllowAnyMethod()
+                          .AllowAnyHeader());
+            });
+
             builder.Services.AddScoped<ICurrentUser, CurrentUserService>();
 
             var app = builder.Build();
@@ -93,6 +116,9 @@ namespace AE.Market.API
             app.UseMiddleware<RequestLoggingMiddleware>();
             app.UseExceptionHandler();
             app.UseSerilogRequestLogging();
+
+            app.UseMiddleware<SecurityHeadersMiddleware>();
+            app.UseCors("DefaultPolicy");
 
             app.UseAuthentication();
             app.UseAuthorization();

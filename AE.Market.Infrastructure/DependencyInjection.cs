@@ -22,6 +22,9 @@ using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
 using AE.Market.Infrastructure.Persistence.Seeders;
 using AE.Market.Infrastructure.Search;
 using Elastic.Clients.Elasticsearch;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
 
 namespace AE.Market.Infrastructure
 {
@@ -37,7 +40,8 @@ namespace AE.Market.Infrastructure
                 .AddOutbox()
                 .AddCache(configuration)
                 .AddAuth(configuration)
-                .AddSearch(configuration);
+                .AddSearch(configuration)
+                .AddObservability(configuration);
 
             return services;
         }
@@ -211,6 +215,37 @@ namespace AE.Market.Infrastructure
             services.AddSingleton<JwtOptions>(jwtOptions);
             services.AddSingleton<IPasswordService, PasswordService>();
             services.AddSingleton<IJwtService, JwtService>();
+
+            return services;
+        }
+
+        private static IServiceCollection AddObservability(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            var otelEndpoint = configuration["OpenTelemetry:Endpoint"] ?? "http://jaeger:4317";
+
+            services.AddOpenTelemetry()
+                .ConfigureResource(r => r.AddService("AE.Market.API"))
+                .WithTracing(t => t
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddEntityFrameworkCoreInstrumentation()
+                    .AddOtlpExporter(o => o.Endpoint = new Uri(otelEndpoint)));
+
+            services.AddHealthChecks()
+                .AddNpgSql(
+                    configuration.GetConnectionString("Database")!,
+                    name: "postgresql",
+                    tags: ["ready"])
+                .AddRedis(
+                    sp => sp.GetRequiredService<IConnectionMultiplexer>(),
+                    name: "redis",
+                    tags: ["ready"])
+                .AddElasticsearch(
+                    configuration["Elasticsearch:Uri"] ?? "http://localhost:9200",
+                    name: "elasticsearch",
+                    tags: ["ready"]);
 
             return services;
         }

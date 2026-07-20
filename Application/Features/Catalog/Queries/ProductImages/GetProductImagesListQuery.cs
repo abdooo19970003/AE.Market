@@ -8,7 +8,7 @@ public sealed record GetProductImagesListQuery(
     int PageSize = 20
 ) : IBaseQuery<PaginatedList<ProductImageDto>>, ICachedQuery
 {
-    public string CacheKey => $"productimages-list-p{Page}s{PageSize}";
+    public string CacheKey => CacheKeys.ProductImagesList(Page, PageSize);
     TimeSpan? ICachedQuery.AbsoluteExpiration => TimeSpan.FromMinutes(15);
     TimeSpan? ICachedQuery.SlidingExpiration => null;
 }

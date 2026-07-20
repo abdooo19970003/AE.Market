@@ -20,6 +20,14 @@ using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Backplane.StackExchangeRedis;
 using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
 using AE.Market.Infrastructure.Persistence.Seeders;
+using AE.Market.Application.Features.Analytics.Events;
+using AE.Market.Application.Common.Behaviors;
+using AE.Market.Infrastructure.Search;
+using Elastic.Clients.Elasticsearch;
+using MediatR;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
 
 namespace AE.Market.Infrastructure
 {
@@ -34,7 +42,13 @@ namespace AE.Market.Infrastructure
                 .AddDatabases(configuration)
                 .AddOutbox()
                 .AddCache(configuration)
-                .AddAuth(configuration);
+                .AddAuth(configuration)
+                .AddSearch(configuration)
+                .AddObservability(configuration);
+
+            // Analytics event handlers
+            services.AddScoped<INotificationHandler<DomainEventNotification<Domain.Aggregates.Analytics.Events.ProductViewedDomainEvent>>, ProductViewedEventHandler>();
+            services.AddScoped<INotificationHandler<DomainEventNotification<Domain.Aggregates.Analytics.Events.SearchQueryLoggedDomainEvent>>, SearchQueryLoggedEventHandler>();
 
             return services;
         }
@@ -63,6 +77,7 @@ namespace AE.Market.Infrastructure
             // Repository
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped(typeof(IReadRepository<>), typeof(Repository<>));
+            services.AddScoped<IAnalyticsReadRepository, AnalyticsReadRepository>();
 
             // Seeder
             services.AddScoped<DbSeeder>();
@@ -87,8 +102,33 @@ namespace AE.Market.Infrastructure
                                 schedule.WithIntervalInSeconds(100).RepeatForever()
                             )
                     );
+
+                var syncJobKey = new JobKey(nameof(SyncProductsJob));
+                cfg.AddJob<SyncProductsJob>(syncJobKey)
+                    .AddTrigger(trigger =>
+                        trigger
+                            .ForJob(syncJobKey)
+                            .WithCronSchedule("0 0 2 * * ?")
+                    );
             });
             services.AddQuartzHostedService();
+            return services;
+        }
+
+        private static IServiceCollection AddSearch(this IServiceCollection services, IConfiguration configuration)
+        {
+            var uri = configuration["Elasticsearch:Uri"] ?? "http://localhost:9200";
+            var defaultIndex = configuration["Elasticsearch:DefaultIndex"] ?? "products";
+
+            var settings = new ElasticsearchClientSettings(new Uri(uri))
+                .DefaultIndex(defaultIndex)
+                .EnableDebugMode()
+                .PrettyJson();
+
+            var client = new ElasticsearchClient(settings);
+            services.AddSingleton(client);
+            services.AddScoped<IElasticsearchService, ElasticsearchService>();
+
             return services;
         }
 
@@ -182,6 +222,37 @@ namespace AE.Market.Infrastructure
             services.AddSingleton<JwtOptions>(jwtOptions);
             services.AddSingleton<IPasswordService, PasswordService>();
             services.AddSingleton<IJwtService, JwtService>();
+
+            return services;
+        }
+
+        private static IServiceCollection AddObservability(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            var otelEndpoint = configuration["OpenTelemetry:Endpoint"] ?? "http://jaeger:4317";
+
+            services.AddOpenTelemetry()
+                .ConfigureResource(r => r.AddService("AE.Market.API"))
+                .WithTracing(t => t
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddEntityFrameworkCoreInstrumentation()
+                    .AddOtlpExporter(o => o.Endpoint = new Uri(otelEndpoint)));
+
+            services.AddHealthChecks()
+                .AddNpgSql(
+                    configuration.GetConnectionString("Database")!,
+                    name: "postgresql",
+                    tags: ["ready"])
+                .AddRedis(
+                    sp => sp.GetRequiredService<IConnectionMultiplexer>(),
+                    name: "redis",
+                    tags: ["ready"])
+                .AddElasticsearch(
+                    configuration["Elasticsearch:Uri"] ?? "http://localhost:9200",
+                    name: "elasticsearch",
+                    tags: ["ready"]);
 
             return services;
         }

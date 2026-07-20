@@ -1,13 +1,15 @@
 using AE.Market.Application.Common.Behaviors;
 using AE.Market.Application.Common.Interfaces;
-using AE.Market.Domain.Aggregates.Catalog.Products.Variants;
+using AE.Market.Application.Services;
 using AE.Market.Domain.Aggregates.Orders.Events;
 using MediatR;
+using CartCacheKeys = AE.Market.Application.Features.Cart.CacheKeys;
 
 namespace AE.Market.Application.Features.Orders.Events;
 
 internal sealed class OrderPlacedHandler(
-    IRepository<ProductVariant> variantRepo
+    IStockManager stockManager,
+    ICacheService cache
 ) : INotificationHandler<DomainEventNotification<OrderPlacedDomainEvent>>
 {
     public async Task Handle(
@@ -18,11 +20,9 @@ internal sealed class OrderPlacedHandler(
 
         foreach (var (variantId, quantity) in evt.Items)
         {
-            var variant = await variantRepo.GetByIdWithTrackingAsync(variantId, cancellationToken);
-            if (variant is null)
-                continue;
-
-            variant.ReserveStock(quantity);
+            await stockManager.ReserveStockAsync(variantId, quantity, cancellationToken);
         }
+
+        await cache.RemoveAsync(CartCacheKeys.CartByUser(evt.UserId), cancellationToken);
     }
 }

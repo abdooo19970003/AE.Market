@@ -14,6 +14,9 @@ internal sealed class AttributeGroupDeletedEventHandler(
         CancellationToken cancellationToken
     )
     {
-        await cache.RemoveAsync(CacheKeys.AttributeGroupsList, cancellationToken);
+        var evt = notification.DomainEvent;
+        await cache.RemoveAsync(CacheKeys.AttributeGroupsList(1, 20), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.AttributeGroupById(evt.AttributeGroupId), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.AttributeGroupsByCategory(evt.CategoryId), cancellationToken);
     }
 }

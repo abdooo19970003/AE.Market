@@ -8,7 +8,7 @@ public sealed record GetTagsListQuery(
     int PageSize = 20
 ) : IBaseQuery<PaginatedList<TagDto>>, ICachedQuery
 {
-    public string CacheKey => $"tags-list-p{Page}s{PageSize}";
+    public string CacheKey => CacheKeys.TagsList(Page, PageSize);
     TimeSpan? ICachedQuery.AbsoluteExpiration => TimeSpan.FromMinutes(15);
     TimeSpan? ICachedQuery.SlidingExpiration => null;
 }

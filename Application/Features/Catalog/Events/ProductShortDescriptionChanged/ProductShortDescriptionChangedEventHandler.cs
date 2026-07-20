@@ -16,6 +16,6 @@ internal sealed class ProductShortDescriptionChangedEventHandler(
     {
         var id = notification.DomainEvent.ProductId;
         await cache.RemoveAsync(CacheKeys.ProductById(id), cancellationToken);
-        await cache.RemoveAsync(CacheKeys.ProductsList, cancellationToken);
+        await cache.RemoveAsync(CacheKeys.ProductsList(1, 20), cancellationToken);
     }
 }

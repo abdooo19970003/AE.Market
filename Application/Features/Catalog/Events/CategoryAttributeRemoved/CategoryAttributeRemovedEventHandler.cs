@@ -15,6 +15,6 @@ internal sealed class CategoryAttributeRemovedEventHandler(
     )
     {
         await cache.RemoveAsync(CacheKeys.CategoryById(notification.DomainEvent.CategoryId), cancellationToken);
-        await cache.RemoveAsync(CacheKeys.CategoriesList, cancellationToken);
+        await cache.RemoveAsync(CacheKeys.CategoriesList(1, 20), cancellationToken);
     }
 }

@@ -20,7 +20,7 @@ internal sealed class CategoryParentChangedEventHandler(
         var domainEvent = notification.DomainEvent;
 
         await cache.RemoveAsync(CacheKeys.CategoryById(domainEvent.CategoryId), cancellationToken);
-        await cache.RemoveAsync(CacheKeys.CategoriesList, cancellationToken);
+        await cache.RemoveAsync(CacheKeys.CategoriesList(1, 20), cancellationToken);
 
         if (domainEvent.OldPath is null || domainEvent.NewPath is null || domainEvent.OldPath == domainEvent.NewPath)
             return;

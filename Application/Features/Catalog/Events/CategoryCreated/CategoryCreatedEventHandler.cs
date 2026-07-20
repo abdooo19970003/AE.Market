@@ -14,6 +14,7 @@ internal sealed class CategoryCreatedEventHandler(
         CancellationToken cancellationToken
     )
     {
-        await cache.RemoveAsync(CacheKeys.CategoriesList, cancellationToken);
+        await cache.RemoveAsync(CacheKeys.CategoriesList(1, 20), cancellationToken);
+        await cache.RemoveAsync("sitemap-xml", cancellationToken);
     }
 }

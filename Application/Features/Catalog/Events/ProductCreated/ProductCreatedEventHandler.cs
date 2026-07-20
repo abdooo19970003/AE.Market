@@ -21,8 +21,9 @@ internal sealed class ProductCreatedEventHandler(
         if (product is null)
             return;
 
-        await cache.RemoveAsync(CacheKeys.ProductsList, cancellationToken);
-        await cache.RemoveAsync(CacheKeys.ProductsByCategory(product.CategoryId), cancellationToken);
-        await cache.RemoveAsync(CacheKeys.ProductsByBrand(product.BrandId), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.ProductsList(1, 20), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.ProductsByCategory(product.CategoryId, 1, 20), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.ProductsByBrand(product.BrandId, 1, 20), cancellationToken);
+        await cache.RemoveAsync("sitemap-xml", cancellationToken);
     }
 }

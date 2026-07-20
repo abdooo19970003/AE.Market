@@ -1,5 +1,6 @@
 ﻿using AE.Market.API.Authentication;
 using AE.Market.API.Helpers;
+using AE.Market.Application.Common.Interfaces;
 using AE.Market.Application.Features.Auth.Commands.CreateProfile;
 using AE.Market.Application.Features.Auth.Commands.DeleteUser;
 using AE.Market.Application.Features.Auth.Commands.DisableUser;
@@ -18,12 +19,14 @@ using AE.Market.Domain.Aggregates.Auth;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace AE.Market.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public sealed class AuthController(IMediator mediator) : ControllerBase
+    [EnableRateLimiting("auth")]
+    public sealed class AuthController(IMediator mediator, ICurrentUser currentUser) : ControllerBase
     {
         [HttpPost("register")]
         public async Task<IActionResult> Register(
@@ -67,7 +70,7 @@ namespace AE.Market.API.Controllers
         [Authorize]
         public async Task<IActionResult> Profile(CancellationToken ct)
         {
-            var result = await mediator.Send(new GetMeQuery(), ct);
+            var result = await mediator.Send(new GetMeQuery(currentUser.UserId), ct);
             return result.ToNotFoundActionResult();
         }
 

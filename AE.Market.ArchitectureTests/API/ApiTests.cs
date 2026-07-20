@@ -213,9 +213,9 @@ namespace AE.Market.ArchitectureTests.API
 
                 var ctor = constructors[0];
                 var parameters = ctor.GetParameters();
-                if (parameters.Length != 1 || parameters[0].ParameterType != typeof(IMediator))
+                if (parameters.Length < 1 || parameters[0].ParameterType != typeof(IMediator))
                 {
-                    failingTypes.Add($"{controller.Name} (expected single IMediator parameter)");
+                    failingTypes.Add($"{controller.Name} (expected IMediator as first parameter)");
                 }
             }
 

@@ -8,7 +8,7 @@ public sealed record GetProductRelationsListQuery(
     int PageSize = 20
 ) : IBaseQuery<PaginatedList<ProductRelationDto>>, ICachedQuery
 {
-    public string CacheKey => $"productrelations-list-p{Page}s{PageSize}";
+    public string CacheKey => CacheKeys.ProductRelationsList(Page, PageSize);
     TimeSpan? ICachedQuery.AbsoluteExpiration => TimeSpan.FromMinutes(15);
     TimeSpan? ICachedQuery.SlidingExpiration => null;
 }

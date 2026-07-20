@@ -14,6 +14,6 @@ internal sealed class BrandCreatedEventHandler(
         CancellationToken cancellationToken
     )
     {
-        await cache.RemoveAsync(CacheKeys.BrandsList, cancellationToken);
+        await cache.RemoveAsync(CacheKeys.BrandsList(1, 20), cancellationToken);
     }
 }

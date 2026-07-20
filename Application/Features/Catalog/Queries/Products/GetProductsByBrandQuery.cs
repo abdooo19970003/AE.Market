@@ -15,7 +15,7 @@ public sealed record GetProductsByBrandQuery(
 ) : QueryFilter(pageNumber: Page, pageSize: PageSize, sortBy: SortBy, sortDescending: SortDescending, search: Search, isActive: true), IBaseQuery<PaginatedList<ProductDto>>, ICachedQuery
 {
 
-    public string CacheKey => $"products-brand-{BrandId}-p{Page}s{PageSize}s{Status}";
+    public string CacheKey => CacheKeys.ProductsByBrand(BrandId, Page, PageSize);
     TimeSpan? ICachedQuery.AbsoluteExpiration => TimeSpan.FromMinutes(15);
     TimeSpan? ICachedQuery.SlidingExpiration => null;
 }

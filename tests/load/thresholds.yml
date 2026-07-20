@@ -1,0 +1,6 @@
+thresholds:
+  http_req_duration:
+    - threshold: "p(95)<500"
+    - threshold: "p(99)<1000"
+  http_req_failed:
+    - threshold: "rate<0.01"

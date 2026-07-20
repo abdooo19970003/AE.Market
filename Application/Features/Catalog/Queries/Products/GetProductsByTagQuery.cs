@@ -11,7 +11,7 @@ public sealed record GetProductsByTagQuery(
     ProductStatus? Status = null
 ) : IBaseQuery<PaginatedList<ProductDto>>, ICachedQuery
 {
-    public string CacheKey => $"products-tag-{TagSlug}-p{Page}s{PageSize}st{Status}";
+    public string CacheKey => CacheKeys.ProductsByTag(TagSlug, Page, PageSize);
     TimeSpan? ICachedQuery.AbsoluteExpiration => TimeSpan.FromMinutes(15);
     TimeSpan? ICachedQuery.SlidingExpiration => null;
 }

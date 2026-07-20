@@ -24,8 +24,8 @@ internal sealed class ProductUpdatedEventHandler(
         var id = notification.DomainEvent.ProductId;
         await cache.RemoveAsync(CacheKeys.ProductById(id), cancellationToken);
         await cache.RemoveAsync(CacheKeys.ProductBySlug(product.Slug), cancellationToken);
-        await cache.RemoveAsync(CacheKeys.ProductsList, cancellationToken);
-        await cache.RemoveAsync(CacheKeys.ProductsByCategory(product.CategoryId), cancellationToken);
-        await cache.RemoveAsync(CacheKeys.ProductsByBrand(product.BrandId), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.ProductsList(1, 20), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.ProductsByCategory(product.CategoryId, 1, 20), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.ProductsByBrand(product.BrandId, 1, 20), cancellationToken);
     }
 }

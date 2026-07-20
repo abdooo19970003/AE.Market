@@ -15,5 +15,6 @@ internal sealed class PriceDeletedHandler(
     {
         var evt = notification.DomainEvent;
         await cache.RemoveAsync(CacheKeys.ActivePrice(evt.VariantId), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.PriceHistory(evt.VariantId), cancellationToken);
     }
 }

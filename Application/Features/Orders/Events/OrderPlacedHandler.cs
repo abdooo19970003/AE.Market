@@ -1,13 +1,12 @@
 using AE.Market.Application.Common.Behaviors;
 using AE.Market.Application.Common.Interfaces;
-using AE.Market.Domain.Aggregates.Catalog.Products.Variants;
 using AE.Market.Domain.Aggregates.Orders.Events;
 using MediatR;
 
 namespace AE.Market.Application.Features.Orders.Events;
 
 internal sealed class OrderPlacedHandler(
-    IRepository<ProductVariant> variantRepo
+    IStockManager stockManager
 ) : INotificationHandler<DomainEventNotification<OrderPlacedDomainEvent>>
 {
     public async Task Handle(
@@ -18,11 +17,7 @@ internal sealed class OrderPlacedHandler(
 
         foreach (var (variantId, quantity) in evt.Items)
         {
-            var variant = await variantRepo.GetByIdWithTrackingAsync(variantId, cancellationToken);
-            if (variant is null)
-                continue;
-
-            variant.ReserveStock(quantity);
+            await stockManager.ReserveStockAsync(variantId, quantity, cancellationToken);
         }
     }
 }

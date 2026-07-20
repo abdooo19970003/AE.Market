@@ -15,6 +15,6 @@ internal sealed class BrandActivatedEventHandler(
     )
     {
         await cache.RemoveAsync(CacheKeys.BrandById(notification.DomainEvent.BrandId), cancellationToken);
-        await cache.RemoveAsync(CacheKeys.BrandsList, cancellationToken);
+        await cache.RemoveAsync(CacheKeys.BrandsList(1, 20), cancellationToken);
     }
 }

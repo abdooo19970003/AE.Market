@@ -15,5 +15,6 @@ internal sealed class InventoryCreatedHandler(
     {
         var evt = notification.DomainEvent;
         await cache.RemoveAsync(CacheKeys.Stock(evt.VariantId), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.LowStockReport, cancellationToken);
     }
 }

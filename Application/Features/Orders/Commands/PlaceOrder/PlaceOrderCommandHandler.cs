@@ -1,30 +1,23 @@
 using AE.Market.Application.Common.Interfaces;
-using AE.Market.Application.Features.Cart.Specs;
 using AE.Market.Application.Features.Orders.DTOs;
 using AE.Market.Application.Features.Pricing.Specs;
-using AE.Market.Application.Features.Catalog.Products.Specs;
 using AE.Market.Domain.Aggregates.Orders;
 using AE.Market.Domain.Aggregates.Orders.Errors;
 using AE.Market.Domain.Aggregates.Pricing;
-using AE.Market.Domain.Aggregates.Catalog.Products;
-using AE.Market.Domain.Aggregates.Catalog.Products.Variants;
 using AE.Market.Domain.Common.Abstracts;
 using AE.Market.Domain.Exceptions;
 using MediatR;
 using System.Text.Json;
-using CartAggregate = AE.Market.Domain.Aggregates.Cart.Cart;
 
 namespace AE.Market.Application.Features.Orders.Commands.PlaceOrder;
 
 internal sealed class PlaceOrderCommandHandler(
     IRepository<Order> orderRepo,
     IRepository<IdempotencyRequest> idempotencyRepo,
-    IReadRepository<CartAggregate> cartReadRepo,
-    IRepository<CartAggregate> cartRepo,
+    ICartLookup cartLookup,
     IPriceCalculator priceCalculator,
     IReadRepository<Marketplace> marketplaceRepo,
-    IReadRepository<ProductVariant> variantRepo,
-    IReadRepository<Product> productRepo,
+    IProductVariantLookup variantLookup,
     ICurrentUser currentUser
 ) : IRequestHandler<PlaceOrderCommand, Result<OrderDto>>
 {
@@ -41,36 +34,28 @@ internal sealed class PlaceOrderCommandHandler(
             return Result<OrderDto>.Success(cached!);
         }
 
-        var cartSpec = new CartByUserIdSpec(currentUser.UserId);
-        var cart = await cartReadRepo.FirstOrDefaultAsync(cartSpec, ct);
-        if (cart is null || cart.Items.Count == 0)
+        var cartResult = await cartLookup.GetCartForOrderAsync(currentUser.UserId, ct);
+        if (cartResult is null)
             return Result<OrderDto>.Fail(OrderErrors.EmptyOrder);
+
+        var (cartId, cartItems) = cartResult.Value;
 
         var marketplace = await marketplaceRepo.FirstOrDefaultAsync(
             new MarketplaceByCodeSpec("global"), ct);
         var marketplaceId = marketplace?.Id ?? Guid.Empty;
 
-        var variantIds = cart.Items.Select(i => i.VariantId).ToList();
-        var variants = await variantRepo.ListWithSpecAsync(new VariantsByIdsSpec(variantIds), ct);
-
-        var variantMap = variants.ToDictionary(v => v.Id);
-
-        var productIds = variantMap.Values.Select(v => v.ProductId).Distinct().ToList();
-        var products = await productRepo.ListWithSpecAsync(new ProductsByIdsSpec(productIds), ct);
-        var productMap = products.ToDictionary(p => p.Id);
+        var variantIds = cartItems.Select(i => i.VariantId).ToList();
+        var variantInfos = await variantLookup.GetOrderInfoAsync(variantIds, ct);
+        var variantInfoMap = variantInfos.ToDictionary(v => v.VariantId);
 
         var orderId = Guid.NewGuid();
         var orderNumber = GenerateOrderNumber();
         var orderItems = new List<OrderItem>();
 
-        foreach (var cartItem in cart.Items)
+        foreach (var cartItem in cartItems)
         {
-            if (!variantMap.TryGetValue(cartItem.VariantId, out var variant))
+            if (!variantInfoMap.TryGetValue(cartItem.VariantId, out var info))
                 continue;
-
-            var productName = productMap.TryGetValue(variant.ProductId, out var product)
-                ? product.Name
-                : string.Empty;
 
             var finalPrice = await priceCalculator.CalculateAsync(
                 cartItem.VariantId, cartItem.Quantity, marketplaceId, ct);
@@ -79,9 +64,9 @@ internal sealed class PlaceOrderCommandHandler(
                 Guid.NewGuid(),
                 orderId,
                 cartItem.VariantId,
-                productName,
-                variant.Name,
-                variant.Sku.ToString(),
+                info.ProductName,
+                info.VariantName,
+                info.Sku,
                 finalPrice.UnitPrice.Amount,
                 cartItem.Quantity);
 
@@ -101,9 +86,7 @@ internal sealed class PlaceOrderCommandHandler(
             return Result<OrderDto>.Fail(new Error("Orders.Domain", ex.Message));
         }
 
-        var trackedCart = await cartRepo.GetBySpecWithTrackingAsync(
-            new CartByIdSpec(cart.Id), ct);
-        trackedCart?.ClearCart();
+        await cartLookup.ClearCartAsync(cartId, ct);
 
         var responseJson = JsonSerializer.Serialize(MapToDto(order));
         await idempotencyRepo.AddAsync(

@@ -15,6 +15,6 @@ internal sealed class GroupUnitUnitRemovedEventHandler(
     )
     {
         await cache.RemoveAsync(CacheKeys.GroupUnitById(notification.DomainEvent.GroupUnitId), cancellationToken);
-        await cache.RemoveAsync(CacheKeys.GroupUnitsList, cancellationToken);
+        await cache.RemoveAsync(CacheKeys.GroupUnitsList(1, 20), cancellationToken);
     }
 }

@@ -15,6 +15,6 @@ internal sealed class VariantStockAdjustedEventHandler(
     )
     {
         await cache.RemoveAsync(CacheKeys.ProductById(notification.DomainEvent.ProductId), cancellationToken);
-        await cache.RemoveAsync(CacheKeys.ProductsList, cancellationToken);
+        await cache.RemoveAsync(CacheKeys.ProductsList(1, 20), cancellationToken);
     }
 }

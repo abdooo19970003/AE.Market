@@ -14,6 +14,6 @@ internal sealed class AttributeGroupUpdatedEventHandler(
         CancellationToken cancellationToken
     )
     {
-        await cache.RemoveAsync(CacheKeys.AttributeGroupsList, cancellationToken);
+        await cache.RemoveAsync(CacheKeys.AttributeGroupsList(1, 20), cancellationToken);
     }
 }

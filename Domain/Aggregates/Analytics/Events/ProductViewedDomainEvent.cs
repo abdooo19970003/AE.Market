@@ -1,0 +1,5 @@
+using AE.Market.Domain.Common.Abstracts;
+
+namespace AE.Market.Domain.Aggregates.Analytics.Events;
+
+public sealed record ProductViewedDomainEvent(Guid ProductId) : IDomainEvent;

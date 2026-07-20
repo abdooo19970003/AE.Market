@@ -1,4 +1,5 @@
-﻿using AE.Market.Domain.Aggregates.Catalog.Attributes;
+﻿using AE.Market.Domain.Aggregates.Analytics.Events;
+using AE.Market.Domain.Aggregates.Catalog.Attributes;
 using AE.Market.Domain.Aggregates.Catalog.Errors;
 using AE.Market.Domain.Aggregates.Catalog.Events;
 using AE.Market.Domain.Aggregates.Catalog.Products.Variants;
@@ -38,6 +39,7 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     public string? MetaDescription { get; private set; }
     public string? MetaKeywords { get; private set; }
     public string? OgImage { get; private set; }
+    public int ViewCount { get; private set; }
 
     // Weak reference to Category aggregate root
     public Guid CategoryId { get; private set; }
@@ -335,6 +337,12 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
         OgImage = ogImage;
         AddDomainEvent(new ProductOgImageChangedDomainEvent(Id, ogImage));
         UpdateLastModified();
+    }
+
+    public void IncrementViewCount()
+    {
+        ViewCount++;
+        AddDomainEvent(new ProductViewedDomainEvent(Id));
     }
 
     public void SetShortDescription(string? shortDescription)

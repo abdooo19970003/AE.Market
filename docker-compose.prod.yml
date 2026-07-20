@@ -25,17 +25,14 @@ services:
         limits:
           cpus: "1.0"
           memory: 512M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 15s
     restart: unless-stopped
 
   db-migration:
     image: mcr.microsoft.com/dotnet/sdk:10.0
     working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
     volumes:
       - ./AE.Market.API:/app
       - ./Application:/app/Application
@@ -47,8 +44,8 @@ services:
       sh -c "
         dotnet tool install --global dotnet-ef --version 10.0.0 &&
         export PATH=$PATH:/root/.dotnet/tools &&
-        dotnet restore AE.Market.API/AE.Market.API.csproj &&
-        dotnet ef database update --project AE.Market.Infrastructure --startup-project AE.Market.API
+        dotnet restore AE.Market.API.csproj &&
+        dotnet ef database update --project AE.Market.Infrastructure --startup-project .
       "
 
   postgres:

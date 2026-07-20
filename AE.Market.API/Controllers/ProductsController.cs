@@ -25,6 +25,7 @@ using AE.Market.Application.Features.Catalog.Queries.ProductImages;
 using AE.Market.Application.Features.Catalog.Queries.ProductRelations;
 using AE.Market.Application.Features.Catalog.Queries.Products;
 using AE.Market.Application.Features.Catalog.Queries.Tags;
+using AE.Market.Application.Features.Analytics.Commands.RecordProductView;
 using AE.Market.Domain.Aggregates.Auth;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -47,6 +48,7 @@ public sealed class ProductsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetProductById(Guid id, CancellationToken ct)
     {
         var result = await mediator.Send(new GetProductByIdQuery(id), ct);
+        _ = mediator.Send(new RecordProductViewCommand(id), ct);
         return result.ToNotFoundActionResult();
     }
 

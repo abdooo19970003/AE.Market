@@ -9,6 +9,7 @@ using AE.Market.Infrastructure.Persistence;
 using AE.Market.Infrastructure.Persistence.Seeders;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Serilog;
 using ZiggyCreatures.Caching.Fusion;
 
@@ -104,6 +105,12 @@ namespace AE.Market.API
                 var esService = scope.ServiceProvider.GetRequiredService<IElasticsearchService>();
                 esService.EnsureIndicesAsync().GetAwaiter().GetResult();
             }
+
+            app.MapHealthChecks("/health");
+            app.MapHealthChecks("/health/ready", new HealthCheckOptions
+            {
+                Predicate = check => check.Tags.Contains("ready")
+            });
 
             return app;
         }

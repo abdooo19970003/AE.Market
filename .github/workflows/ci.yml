@@ -8,58 +8,142 @@ on:
 
 env:
   DOTNET_VERSION: "10.0.x"
-  DOCKER_IMAGE: ghcr.io/${{ github.repository }}
+  REGISTRY: ghcr.io
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore dependencies
-        run: dotnet restore AE.Market.slnx
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore
 
       - name: Build
-        run: dotnet build AE.Market.slnx --configuration Release --no-restore
+        run: dotnet build --no-restore -c Release
 
       - name: Domain Tests
-        run: dotnet test tests/AE.Market.Domain.Tests/AE.Market.Domain.Tests.csproj --configuration Release --no-build --verbosity normal
+        run: dotnet test tests/AE.Market.Domain.Tests/AE.Market.Domain.Tests.csproj --no-build -c Release --verbosity normal
 
       - name: Architecture Tests
-        run: dotnet test AE.Market.ArchitectureTests/AE.Market.ArchitectureTests.csproj --configuration Release --no-build --verbosity normal
+        run: dotnet test AE.Market.ArchitectureTests/AE.Market.ArchitectureTests.csproj --no-build -c Release --verbosity normal
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: marketDb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.14.0
+        env:
+          discovery.type: single-node
+          xpack.security.enabled: "false"
+        ports:
+          - 9200:9200
+        options: >-
+          --health-cmd "curl -f http://localhost:9200/_cluster/health || exit 1"
+          --health-interval 15s
+          --health-timeout 10s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
 
       - name: Integration Tests
-        uses: Coactions/setup-docker-compose@v1
-        with:
-          version: v2.24.0
+        run: dotnet test tests/AE.Market.Integration.Tests/AE.Market.Integration.Tests.csproj --no-build -c Release --verbosity normal
+        env:
+          ConnectionStrings__Database: "Host=localhost;Port=5432;Database=marketDb;Username=postgres;Password=password"
+          ConnectionStrings__redis: "localhost:6379,password=password,abortConnect=false"
+          Elasticsearch__Uri: "http://localhost:9200"
+          Jwt__Secret: "TestSecretForCI123456789012345678"
+          Jwt__Issuer: "AE.Market.API"
+          Jwt__Audience: "developers"
+          Jwt__ExpirationInMinutes: "60"
+          ASPNETCORE_ENVIRONMENT: "IntegrationTest"
 
-      - name: Run Integration Tests
-        run: dotnet test tests/AE.Market.Integration.Tests/AE.Market.Integration.Tests.csproj --configuration Release --no-build --verbosity normal
-
-  docker-build:
-    needs: build-and-test
+  docker-push:
     runs-on: ubuntu-latest
+    needs: build-and-test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
     permissions:
       contents: read
       packages: write
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}
+          tags: |
+            type=sha
+            type=raw,value=latest
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -67,6 +151,5 @@ jobs:
           context: .
           file: AE.Market.API/Dockerfile
           push: true
-          tags: |
-            ${{ env.DOCKER_IMAGE }}:latest
-            ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

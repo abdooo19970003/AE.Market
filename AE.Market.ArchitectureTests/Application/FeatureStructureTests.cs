@@ -5,6 +5,11 @@ namespace AE.Market.ArchitectureTests.Application
 {
     public class FeatureStructureTests : BaseTest
     {
+        private static readonly HashSet<string> ExcludedFeatures = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Search" // ES-backed read feature — no Commands/Queries/Specs/CacheKeys (legitimately different architecture)
+        };
+
         private static List<string> GetFeatureNames()
         {
             return ApplicationAssembly
@@ -13,6 +18,7 @@ namespace AE.Market.ArchitectureTests.Application
                 .Where(ns => ns?.StartsWith("AE.Market.Application.Features.") == true)
                 .Select(ns => ns!.Split('.')[4])
                 .Distinct()
+                .Where(name => !ExcludedFeatures.Contains(name))
                 .OrderBy(name => name)
                 .ToList();
         }

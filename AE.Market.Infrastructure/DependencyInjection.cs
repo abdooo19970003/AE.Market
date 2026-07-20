@@ -20,8 +20,11 @@ using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Backplane.StackExchangeRedis;
 using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
 using AE.Market.Infrastructure.Persistence.Seeders;
+using AE.Market.Application.Features.Analytics.Events;
+using AE.Market.Application.Common.Behaviors;
 using AE.Market.Infrastructure.Search;
 using Elastic.Clients.Elasticsearch;
+using MediatR;
 using OpenTelemetry;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Resources;
@@ -42,6 +45,10 @@ namespace AE.Market.Infrastructure
                 .AddAuth(configuration)
                 .AddSearch(configuration)
                 .AddObservability(configuration);
+
+            // Analytics event handlers
+            services.AddScoped<INotificationHandler<DomainEventNotification<Domain.Aggregates.Analytics.Events.ProductViewedDomainEvent>>, ProductViewedEventHandler>();
+            services.AddScoped<INotificationHandler<DomainEventNotification<Domain.Aggregates.Analytics.Events.SearchQueryLoggedDomainEvent>>, SearchQueryLoggedEventHandler>();
 
             return services;
         }

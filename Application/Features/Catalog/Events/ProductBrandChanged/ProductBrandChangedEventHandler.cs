@@ -14,8 +14,10 @@ internal sealed class ProductBrandChangedEventHandler(
         CancellationToken cancellationToken
     )
     {
-        var id = notification.DomainEvent.ProductId;
-        await cache.RemoveAsync(CacheKeys.ProductById(id), cancellationToken);
+        var evt = notification.DomainEvent;
+        await cache.RemoveAsync(CacheKeys.ProductById(evt.ProductId), cancellationToken);
         await cache.RemoveAsync(CacheKeys.ProductsList(1, 20), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.ProductsByBrand(evt.OldBrandId, 1, 20), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.ProductsByBrand(evt.NewBrandId, 1, 20), cancellationToken);
     }
 }

@@ -1,12 +1,15 @@
 using AE.Market.Application.Common.Behaviors;
 using AE.Market.Application.Common.Interfaces;
+using AE.Market.Application.Services;
 using AE.Market.Domain.Aggregates.Orders.Events;
 using MediatR;
+using CartCacheKeys = AE.Market.Application.Features.Cart.CacheKeys;
 
 namespace AE.Market.Application.Features.Orders.Events;
 
 internal sealed class OrderPlacedHandler(
-    IStockManager stockManager
+    IStockManager stockManager,
+    ICacheService cache
 ) : INotificationHandler<DomainEventNotification<OrderPlacedDomainEvent>>
 {
     public async Task Handle(
@@ -19,5 +22,7 @@ internal sealed class OrderPlacedHandler(
         {
             await stockManager.ReserveStockAsync(variantId, quantity, cancellationToken);
         }
+
+        await cache.RemoveAsync(CartCacheKeys.CartByUser(evt.UserId), cancellationToken);
     }
 }

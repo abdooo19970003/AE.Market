@@ -14,8 +14,10 @@ internal sealed class ProductSlugChangedEventHandler(
         CancellationToken cancellationToken
     )
     {
-        var id = notification.DomainEvent.ProductId;
-        await cache.RemoveAsync(CacheKeys.ProductById(id), cancellationToken);
+        var evt = notification.DomainEvent;
+        await cache.RemoveAsync(CacheKeys.ProductById(evt.ProductId), cancellationToken);
         await cache.RemoveAsync(CacheKeys.ProductsList(1, 20), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.ProductBySlug(evt.OldSlug), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.ProductBySlug(evt.NewSlug), cancellationToken);
     }
 }

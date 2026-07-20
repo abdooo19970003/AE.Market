@@ -1,22 +1,28 @@
-# Sprint 11 Progress — Analytics & Observability
+# Sprint 12 Progress — Production Hardening
 
-## Tasks
+## Sprint 12 Status: COMPLETE
 
-Task 1: complete (commits 1860c96..f45e571, review clean)
-Task 2: complete (commits f45e571..1ca8fc9, review clean)
-Task 3: complete (commits 1ca8fc9..89a1769, review clean — SaveChangesAsync deviation confirmed)
-Task 4: complete (commits 89a1769..c92881f, review clean — IsDeleted filter fix verified)
-Task 5: complete (commits c92881f..3d48eab, review clean)
-Task 6: complete (commits 3d48eab..9d9dfec, review clean)
-Task 7: complete (commits 9d9dfec..d8b5d81, review clean)
-Task 8: complete (commits d8b5d81..cb91e6a, review clean — arch test fixes)
-Task 9: complete (commits cb91e6a..311f7b4, review clean)
-Task 10: complete — final verification (587 domain, 55 arch, 0 build errors)
+### Tasks
 
-## Sprint 11 Status: COMPLETE ✅
+| Task | Commit | Status |
+|------|--------|--------|
+| Task 1: Docker Optimization | `636846e` + `ffddf7e` | ✅ Approved |
+| Task 2: CI/CD Pipeline | `c868cf9` | ✅ Approved |
+| Task 3: SecurityHeadersMiddleware + CORS | `e00e611` | ✅ Approved |
+| Task 4: Rate Limiting + JWT Rotation | `2fd8df8` | ✅ Approved |
+| Task 5: Documentation (ADRs + Runbook + API Docs) | `4a24236` | ✅ Approved |
+| Task 6: Load Testing (k6 scripts) | `0600521` | ✅ Approved |
+| Task 7: Final Verification | — | ✅ Complete |
+
+### Final Verification Results
+- Build: 0 errors, 27 warnings
+- Domain tests: 587 passing
+- Architecture tests: 55 passing
 
 ### Final State
-- **Build:** 0 errors
-- **Domain Tests:** 587/587 passing
-- **Architecture Tests:** 55/55 passing
-- **Integration Tests:** 9 tests created (require Docker/Testcontainers to run)
+- Docker: Chiseled images (~100MB), prod compose with init container, resource limits, health checks
+- CI/CD: GitHub Actions with build/test/integration/docker-push, GHCR registry
+- Security: SecurityHeadersMiddleware, CORS policies, rate limiting (100/10/60), JWT expiry middleware
+- Documentation: 10 ADRs, operational runbook, ProducesResponseType attributes
+- Load Testing: k6 scripts for products, search, orders with p95<500ms/p99<1000ms/error<1% thresholds
+- All sprints (1-12) complete

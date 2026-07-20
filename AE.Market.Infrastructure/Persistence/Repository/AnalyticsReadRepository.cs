@@ -13,6 +13,7 @@ internal sealed class AnalyticsReadRepository(AppDbContext db) : IAnalyticsReadR
     public async Task<AdminStatsDto> GetAdminStatsAsync(CancellationToken cancellationToken)
     {
         var totalProducts = await db.Products
+            .Where(p => !p.IsDeleted)
             .CountAsync(cancellationToken);
 
         var activeProducts = db.Products
@@ -32,6 +33,7 @@ internal sealed class AnalyticsReadRepository(AppDbContext db) : IAnalyticsReadR
             .AverageAsync(p => (decimal?)p, cancellationToken) ?? 0m;
 
         var totalCategories = await db.Categories
+            .Where(c => !c.IsDeleted)
             .CountAsync(cancellationToken);
 
         var productsByCategory = await db.Categories

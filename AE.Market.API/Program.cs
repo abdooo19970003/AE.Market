@@ -11,6 +11,8 @@ using AE.Market.Infrastructure.Persistence.Seeders;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using System.Security.Claims;
+using System.Threading.RateLimiting;
 using Serilog;
 using ZiggyCreatures.Caching.Fusion;
 
@@ -83,6 +85,59 @@ namespace AE.Market.API
                           .AllowAnyHeader());
             });
 
+            // Security: Rate Limiting
+            builder.Services.AddRateLimiter(options =>
+            {
+                options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            AutoReplenishment = true,
+                            PermitLimit = 100,
+                            QueueLimit = 0,
+                            Window = TimeSpan.FromMinutes(1)
+                        }));
+
+                options.AddPolicy("auth", context =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            AutoReplenishment = true,
+                            PermitLimit = 10,
+                            QueueLimit = 0,
+                            Window = TimeSpan.FromMinutes(1)
+                        }));
+
+                options.AddPolicy("admin", context =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: context.User?.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)
+                            ?? context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            AutoReplenishment = true,
+                            PermitLimit = 60,
+                            QueueLimit = 0,
+                            Window = TimeSpan.FromMinutes(1)
+                        }));
+
+                options.OnRejected = async (context, ct) =>
+                {
+                    context.HttpContext.Response.StatusCode = 429;
+                    if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+                    {
+                        context.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString();
+                    }
+                    await context.HttpContext.Response.WriteAsJsonAsync(new
+                    {
+                        error = "Too many requests",
+                        retryAfter = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var ra)
+                            ? (int)ra.TotalSeconds : 60
+                    }, ct);
+                };
+            });
+
             builder.Services.AddScoped<ICurrentUser, CurrentUserService>();
 
             var app = builder.Build();
@@ -122,6 +177,8 @@ namespace AE.Market.API
 
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseMiddleware<JwtExpiryMiddleware>();
+            app.UseRateLimiter();
             app.MapControllers();
 
             // Ensure ES indices exist on startup

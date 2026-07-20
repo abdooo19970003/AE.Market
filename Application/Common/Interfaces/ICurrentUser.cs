@@ -8,4 +8,5 @@ public interface ICurrentUser
     string? Email { get; }
     Permission[] Permissions { get; }
     bool IsAuthenticated { get; }
+    bool IsTokenExpiringSoon();
 }

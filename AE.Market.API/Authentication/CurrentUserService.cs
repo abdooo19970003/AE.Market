@@ -33,4 +33,17 @@ internal sealed class CurrentUserService(IHttpContextAccessor httpContextAccesso
     }
 
     public bool IsAuthenticated => _user?.Identity?.IsAuthenticated ?? false;
+
+    public bool IsTokenExpiringSoon()
+    {
+        var expClaim = _user?.FindFirstValue("exp");
+        if (expClaim is null) return false;
+
+        if (long.TryParse(expClaim, out var expUnix))
+        {
+            var expDateTime = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
+            return expDateTime - DateTime.UtcNow < TimeSpan.FromMinutes(5);
+        }
+        return false;
+    }
 }

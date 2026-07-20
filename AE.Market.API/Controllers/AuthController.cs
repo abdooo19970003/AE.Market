@@ -19,11 +19,13 @@ using AE.Market.Domain.Aggregates.Auth;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace AE.Market.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [EnableRateLimiting("auth")]
     public sealed class AuthController(IMediator mediator, ICurrentUser currentUser) : ControllerBase
     {
         [HttpPost("register")]

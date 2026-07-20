@@ -66,6 +66,7 @@ namespace AE.Market.Infrastructure
             // Repository
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped(typeof(IReadRepository<>), typeof(Repository<>));
+            services.AddScoped<IAnalyticsReadRepository, AnalyticsReadRepository>();
 
             // Seeder
             services.AddScoped<DbSeeder>();

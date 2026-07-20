@@ -37,6 +37,7 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
     public string? MetaTitle { get; private set; }
     public string? MetaDescription { get; private set; }
     public string? MetaKeywords { get; private set; }
+    public string? OgImage { get; private set; }
 
     // Weak reference to Category aggregate root
     public Guid CategoryId { get; private set; }
@@ -326,6 +327,13 @@ public sealed class Product : BaseEntity, IAggregateRoot, IMetaData
         MetaDescription = description;
         MetaKeywords = keywords;
         AddDomainEvent(new ProductMetaFieldsUpdatedDomainEvent(Id, title, description, keywords));
+        UpdateLastModified();
+    }
+
+    public void SetOgImage(string? ogImage)
+    {
+        OgImage = ogImage;
+        AddDomainEvent(new ProductOgImageChangedDomainEvent(Id, ogImage));
         UpdateLastModified();
     }
 

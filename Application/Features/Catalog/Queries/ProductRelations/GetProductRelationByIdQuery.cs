@@ -3,4 +3,9 @@ using AE.Market.Application.Features.Catalog.DTOs;
 
 namespace AE.Market.Application.Features.Catalog.Queries.ProductRelations;
 
-public sealed record GetProductRelationByIdQuery(Guid Id) : IBaseQuery<ProductRelationDto>;
+public sealed record GetProductRelationByIdQuery(Guid Id) : IBaseQuery<ProductRelationDto>, ICachedQuery
+{
+    public string CacheKey => CacheKeys.ProductRelationById(Id);
+    TimeSpan? ICachedQuery.AbsoluteExpiration => TimeSpan.FromMinutes(15);
+    TimeSpan? ICachedQuery.SlidingExpiration => null;
+}

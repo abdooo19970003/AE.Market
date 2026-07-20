@@ -8,7 +8,7 @@ public sealed record GetBundleItemsListQuery(
     int PageSize = 20
 ) : IBaseQuery<PaginatedList<BundleItemDto>>, ICachedQuery
 {
-    public string CacheKey => $"bundleitems-list-p{Page}s{PageSize}";
+    public string CacheKey => CacheKeys.BundleItemsList(Page, PageSize);
     TimeSpan? ICachedQuery.AbsoluteExpiration => TimeSpan.FromMinutes(15);
     TimeSpan? ICachedQuery.SlidingExpiration => null;
 }

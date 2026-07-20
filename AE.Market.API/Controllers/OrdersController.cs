@@ -1,4 +1,5 @@
 using AE.Market.API.Helpers;
+using AE.Market.Application.Common.Interfaces;
 using AE.Market.Application.Features.Orders.Commands.CancelOrder;
 using AE.Market.Application.Features.Orders.Commands.PlaceOrder;
 using AE.Market.Application.Features.Orders.Queries.GetOrder;
@@ -12,7 +13,7 @@ namespace AE.Market.API.Controllers;
 [Route("api/orders")]
 [ApiController]
 [Authorize]
-public sealed class OrdersController(IMediator mediator) : ControllerBase
+public sealed class OrdersController(IMediator mediator, ICurrentUser currentUser) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> PlaceOrder(
@@ -26,7 +27,7 @@ public sealed class OrdersController(IMediator mediator) : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetHistory(CancellationToken ct)
     {
-        var result = await mediator.Send(new GetOrderHistoryQuery(), ct);
+        var result = await mediator.Send(new GetOrderHistoryQuery(currentUser.UserId), ct);
         return result.ToActionResult();
     }
 

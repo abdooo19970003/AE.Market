@@ -8,7 +8,7 @@ public sealed record GetUnitsListQuery(
     int PageSize = 20
 ) : IBaseQuery<PaginatedList<UnitDto>>, ICachedQuery
 {
-    public string CacheKey => $"units-list-p{Page}s{PageSize}";
+    public string CacheKey => CacheKeys.UnitsList(Page, PageSize);
     TimeSpan? ICachedQuery.AbsoluteExpiration => TimeSpan.FromMinutes(15);
     TimeSpan? ICachedQuery.SlidingExpiration => null;
 }

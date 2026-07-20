@@ -13,7 +13,7 @@ public sealed record GetProductsByCategoryQuery(
     bool SortDescending = false
 ) : IBaseQuery<PaginatedList<ProductDto>>, ICachedQuery
 {
-    public string CacheKey => $"products-category-{CategoryId}-p{Page}s{PageSize}s{Status}";
+    public string CacheKey => CacheKeys.ProductsByCategory(CategoryId, Page, PageSize);
     TimeSpan? ICachedQuery.AbsoluteExpiration => TimeSpan.FromMinutes(15);
     TimeSpan? ICachedQuery.SlidingExpiration => null;
 }

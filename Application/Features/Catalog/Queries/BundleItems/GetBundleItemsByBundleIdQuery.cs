@@ -7,4 +7,9 @@ public sealed record GetBundleItemsByBundleIdQuery(
     Guid BundleId,
     int Page = 1,
     int PageSize = 20
-) : IBaseQuery<PaginatedList<BundleItemDto>>;
+) : IBaseQuery<PaginatedList<BundleItemDto>>, ICachedQuery
+{
+    public string CacheKey => CacheKeys.BundleItemsByBundle(BundleId);
+    TimeSpan? ICachedQuery.AbsoluteExpiration => TimeSpan.FromMinutes(15);
+    TimeSpan? ICachedQuery.SlidingExpiration => null;
+}

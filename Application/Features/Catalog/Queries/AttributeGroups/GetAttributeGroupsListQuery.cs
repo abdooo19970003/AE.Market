@@ -8,7 +8,7 @@ public sealed record GetAttributeGroupsListQuery(
     int PageSize = 20
 ) : IBaseQuery<PaginatedList<AttributeGroupDto>>, ICachedQuery
 {
-    public string CacheKey => $"attributegroups-list-p{Page}s{PageSize}";
+    public string CacheKey => CacheKeys.AttributeGroupsList(Page, PageSize);
     TimeSpan? ICachedQuery.AbsoluteExpiration => TimeSpan.FromMinutes(15);
     TimeSpan? ICachedQuery.SlidingExpiration => null;
 }

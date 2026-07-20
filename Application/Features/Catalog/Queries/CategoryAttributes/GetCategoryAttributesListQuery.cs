@@ -8,7 +8,7 @@ public sealed record GetCategoryAttributesListQuery(
     int PageSize = 20
 ) : IBaseQuery<PaginatedList<CategoryAttributeDto>>, ICachedQuery
 {
-    public string CacheKey => $"categoryattributes-list-p{Page}s{PageSize}";
+    public string CacheKey => CacheKeys.CategoryAttributesList(Page, PageSize);
     TimeSpan? ICachedQuery.AbsoluteExpiration => TimeSpan.FromMinutes(15);
     TimeSpan? ICachedQuery.SlidingExpiration => null;
 }

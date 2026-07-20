@@ -8,7 +8,7 @@ public sealed record GetBrandsListQuery(
     int PageSize = 20
 ) : IBaseQuery<PaginatedList<BrandDto>>, ICachedQuery
 {
-    public string CacheKey => $"brands-list-p{Page}s{PageSize}";
+    public string CacheKey => CacheKeys.BrandsList(Page, PageSize);
     TimeSpan? ICachedQuery.AbsoluteExpiration => TimeSpan.FromMinutes(15);
     TimeSpan? ICachedQuery.SlidingExpiration => null;
 }

@@ -27,5 +27,6 @@ internal sealed class ProductDeletedEventHandler(
         await cache.RemoveAsync(CacheKeys.ProductsList(1, 20), cancellationToken);
         await cache.RemoveAsync(CacheKeys.ProductsByCategory(product.CategoryId, 1, 20), cancellationToken);
         await cache.RemoveAsync(CacheKeys.ProductsByBrand(product.BrandId, 1, 20), cancellationToken);
+        await cache.RemoveAsync("sitemap-xml", cancellationToken);
     }
 }
